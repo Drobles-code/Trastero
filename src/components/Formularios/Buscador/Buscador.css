@@ -1,0 +1,39 @@
+
+.container-buscador {
+  background-color: white;
+  border-radius: 30px;
+  padding: 3px 50px 3px 10px;
+  position: relative;
+  width: 450px;
+  max-width: 90%;
+}
+.search-box {
+  background-color: transparent;
+  outline: none;
+  height: 35px;
+  font-size: 15px;
+  border: 0;
+  width: 100%;
+}
+
+ .search-button {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  background-color: rgb(111, 72, 218);
+  border-radius: 50%;
+  border: 0;
+  width: 35px;
+  height: 35px;
+  outline: 0;
+ }
+
+ .buscador-top {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}         
+
+    

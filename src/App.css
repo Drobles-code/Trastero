@@ -1,0 +1,18 @@
+
+  .flexbox-container {
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: space-around;
+  }
+  .App {
+    font-family: sans-serif;
+    text-align: center;
+  }
+
+  .btn {
+    border: none; 
+    color: white; 
+    padding: 14px 28px; 
+    cursor: pointer; 
+    border-radius: 5px; 
+  }

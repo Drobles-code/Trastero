@@ -1,0 +1,97 @@
+
+.fldset-class{
+    border: 5px white solid;
+    background-color: black;
+    margin-left:250px;
+    padding: 24px;
+}
+
+.legend-class{
+    border: 1px white solid; 
+    margin-left: 1em; 
+    padding: 0.2em 0.8em;
+    background-color:#111111;
+    color:white;
+}
+/*----------------------------------------*/
+.form-group{
+    display: inline-block;
+    padding:5px;
+    border:2px solid;
+    margin:10px;
+    color: white;
+    justify-content: center;
+    background-color:black;
+}
+
+
+.form-group-combo{
+    margin:0px auto;
+    padding:0;
+    color: white;
+    background-color:black;
+}
+.form-group-combo>select{
+    display:block;
+    color:white;
+    background-color:#0606a5;
+    width:100px;
+    height:25px;
+    /*border:1px; */
+    border-radius: 5px;
+    outline:none;
+}
+.form-group>label{
+    position:relative;
+    top:-25px;
+    left:3px;
+    color: white;
+   /* background-color:#0606a5; */
+     background-color: black;
+}
+
+input[type=text] {
+    display:block;
+    border:none;
+    border-bottom:1px solid #ccc;
+    font-size:16px;
+    width:100%;
+    color : rgb(71, 52, 124)
+}
+
+/* ---------------------- Tooltiptext -----------------  */
+ .tooltiptext{
+    visibility: hidden;    
+    position: absolute;
+    padding: 14px 32px;    
+    border-radius: 6px;
+    line-height:20px;
+    text-align:center;
+    font-size: 14px;
+    top: 64px;
+    left: -14px;
+    right:0;
+    background-color: #040450;
+    color:rgb(187, 228, 6);
+    z-index: 1;    
+} 
+
+
+
+
+.form-group:hover .tooltiptext{
+    position: relative;
+    visibility: visible;
+    transition: .5s ease;
+} 
+.form-group .tooltiptext::after {
+ content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent transparent #040450 transparent;
+}
+/*------------------- Fin ----------------------------- */
