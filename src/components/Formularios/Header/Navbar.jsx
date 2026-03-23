@@ -9,7 +9,7 @@ import AboutContent from '../../Content/AboutContent';
 
 const NavBar = styled.nav`
   background: ${props => props.navbarColor};
-  border-bottom: 3px solid ${props => props.accentColor};
+  border-bottom: 3px solid var(--accent-color, #667eea);
   padding: 15px 30px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
   position: sticky;
@@ -34,24 +34,21 @@ const LeftSection = styled.div`
 `;
 
 const RightSection = styled.div`
+  position: absolute;
+  right: 30px;
+  top: ${props => props.active ? '65px' : '-300px'};
+  flex-direction: column;
+  background-color: #222;
+  width: auto;
+  min-width: 180px;
+  text-align: right;
+  transition: top 0.3s ease;
+  padding: 15px 20px;
+  gap: 0;
+  border: 1px solid #444;
+  border-radius: 5px;
   display: flex;
-  align-items: center;
-  gap: 30px;
-
-  @media (max-width: 768px) {
-    position: absolute;
-    left: -100%;
-    top: 70px;
-    flex-direction: column;
-    background-color: #222;
-    width: 100%;
-    text-align: center;
-    transition: 0.3s;
-    left: ${props => props.active ? '0' : '-100%'};
-    padding: 20px 0;
-    gap: 0;
-    border-bottom: 2px solid #333;
-  }
+  align-items: flex-end;
 `;
 
 const Logo = styled(Link)`
@@ -114,17 +111,32 @@ const NavButton = styled.button`
   }
 `;
 
+const MenuButton = styled.button`
+  background: var(--accent-color, #667eea);
+  color: #fff;
+  border: 2px solid var(--accent-color, #667eea);
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 14px;
+  width: 100%;
+  margin: 10px 0;
+
+  &:hover {
+    opacity: 0.9;
+    box-shadow: 0 2px 8px var(--accent-color, #667eea);
+  }
+`;
+
 const HamburgerMenu = styled.button`
-  display: none;
+  display: block;
   background: none;
   border: none;
   color: white;
   font-size: 28px;
   cursor: pointer;
-
-  @media (max-width: 768px) {
-    display: block;
-  }
 `;
 
 const UserSection = styled.div`
@@ -262,20 +274,12 @@ function Navbar({ user, onLogout, onLogin }) {
                 </LogoutBtn>
               </UserSection>
             ) : (
-              <>
-                <NavButton accentColor={theme.accent} onClick={() => {
-                  setShowSignInModal(true);
-                  closeMobileMenu();
-                }}>
-                  Iniciar Sesión
-                </NavButton>
-                <NavButton accentColor={theme.accent} onClick={() => {
-                  navigate('/signup');
-                  closeMobileMenu();
-                }}>
-                  Registrarse
-                </NavButton>
-              </>
+              <MenuButton accentColor={theme.accent} onClick={() => {
+                setShowSignInModal(true);
+                closeMobileMenu();
+              }}>
+                Iniciar Sesión
+              </MenuButton>
             )}
           </RightSection>
         </NavContainer>

@@ -149,6 +149,7 @@ function Settings() {
       background: '#000',
       text: '#fff',
       accent: '#667eea',
+      modalBg: '#1a1a1a',
     },
     {
       name: 'Dark Blue',
@@ -156,6 +157,7 @@ function Settings() {
       background: '#0f1419',
       text: '#e0e0e0',
       accent: '#00a8ff',
+      modalBg: '#0f1419',
     },
     {
       name: 'Dark Green',
@@ -163,6 +165,7 @@ function Settings() {
       background: '#000a02',
       text: '#ffffff',
       accent: '#00d084',
+      modalBg: '#0d1b0f',
     },
     {
       name: 'Dark Purple',
@@ -170,6 +173,7 @@ function Settings() {
       background: '#0f0015',
       text: '#f5f5f5',
       accent: '#c200ff',
+      modalBg: '#1a0a2e',
     },
     {
       name: 'Dark Red',
@@ -177,6 +181,7 @@ function Settings() {
       background: '#0a0000',
       text: '#ffffff',
       accent: '#ff4444',
+      modalBg: '#1a0000',
     },
     {
       name: 'Custom',
@@ -184,6 +189,7 @@ function Settings() {
       background: localTheme.background,
       text: localTheme.text,
       accent: localTheme.accent,
+      modalBg: localTheme.modalBg,
     },
   ];
 

@@ -13,18 +13,28 @@ const Container = styled.div`
   transition: background-color 0.3s ease;
 `;
 
+const getContrastColor = (hexColor) => {
+  const hex = hexColor.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  const luminancia = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminancia > 0.5 ? '#000000' : '#ffffff';
+};
+
 const FormBox = styled.div`
-  background: white;
+  background: ${props => props.bgColor};
   padding: 40px;
   border-radius: 10px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
   width: 100%;
   max-width: 450px;
+  transition: background-color 0.3s ease;
 `;
 
 const Title = styled.h1`
   text-align: center;
-  color: #333;
+  color: ${props => getContrastColor(props.bgColor || '#ffffff')};
   margin-bottom: 30px;
   font-size: 28px;
 `;
@@ -36,7 +46,7 @@ const FormGroup = styled.div`
 const Label = styled.label`
   display: block;
   margin-bottom: 8px;
-  color: #555;
+  color: ${props => getContrastColor(props.bgColor || '#ffffff')};
   font-weight: 600;
   font-size: 14px;
 `;
@@ -44,11 +54,23 @@ const Label = styled.label`
 const Input = styled.input`
   width: 100%;
   padding: 12px;
-  border: 2px solid #e0e0e0;
+  border: 2px solid ${props => {
+    const contrastColor = getContrastColor(props.bgColor || '#ffffff');
+    return contrastColor === '#ffffff' ? '#444' : '#ddd';
+  }};
   border-radius: 5px;
   font-size: 14px;
   transition: border-color 0.3s;
   font-family: inherit;
+  background-color: ${props => {
+    const contrastColor = getContrastColor(props.bgColor || '#ffffff');
+    return contrastColor === '#ffffff' ? '#1a1a1a' : '#f8f9fa';
+  }};
+  color: ${props => getContrastColor(props.bgColor || '#ffffff') === '#ffffff' ? '#ffffff' : '#333'};
+
+  &::placeholder {
+    color: ${props => getContrastColor(props.bgColor || '#ffffff') === '#ffffff' ? '#999' : '#999'};
+  }
 
   &:focus {
     outline: none;
@@ -64,7 +86,7 @@ const Input = styled.input`
 const Button = styled.button`
   width: 100%;
   padding: 12px;
-  background: ${props => props.accentColor || '#667eea'};
+  background: var(--accent-color, #667eea);
   color: white;
   border: none;
   border-radius: 5px;
@@ -75,7 +97,7 @@ const Button = styled.button`
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px ${props => props.accentColor ? props.accentColor + '66' : 'rgba(102, 126, 234, 0.4)'};
+    box-shadow: 0 5px 15px var(--accent-color, rgba(102, 126, 234, 0.4));
   }
 
   &:active {
@@ -98,10 +120,10 @@ const ErrorMessage = styled.p`
 const LinkText = styled.p`
   text-align: center;
   margin-top: 20px;
-  color: #666;
+  color: ${props => getContrastColor(props.bgColor || '#ffffff')};
 
   a {
-    color: ${props => props.accentColor || '#667eea'};
+    color: var(--accent-color, #667eea);
     text-decoration: none;
     font-weight: 600;
     cursor: pointer;
@@ -172,11 +194,11 @@ function SignUp() {
 
   return (
     <Container bgColor={theme.background}>
-      <FormBox>
-        <Title>Crear Cuenta</Title>
+      <FormBox bgColor={theme.modalBg || theme.background}>
+        <Title bgColor={theme.modalBg || theme.background}>Crear Cuenta</Title>
         <form onSubmit={handleSubmit}>
           <FormGroup>
-            <Label htmlFor="name">Nombre Completo</Label>
+            <Label htmlFor="name" bgColor={theme.modalBg || theme.background}>Nombre Completo</Label>
             <Input
               type="text"
               id="name"
@@ -185,11 +207,12 @@ function SignUp() {
               onChange={handleChange}
               placeholder="Tu nombre completo"
               accentColor={theme.accent}
+              bgColor={theme.modalBg || theme.background}
             />
           </FormGroup>
 
           <FormGroup>
-            <Label htmlFor="email">Correo Electrónico</Label>
+            <Label htmlFor="email" bgColor={theme.modalBg || theme.background}>Correo Electrónico</Label>
             <Input
               type="email"
               id="email"
@@ -198,11 +221,12 @@ function SignUp() {
               onChange={handleChange}
               placeholder="tu@email.com"
               accentColor={theme.accent}
+              bgColor={theme.modalBg || theme.background}
             />
           </FormGroup>
 
           <FormGroup>
-            <Label htmlFor="password">Contraseña</Label>
+            <Label htmlFor="password" bgColor={theme.modalBg || theme.background}>Contraseña</Label>
             <Input
               type="password"
               id="password"
@@ -211,11 +235,12 @@ function SignUp() {
               onChange={handleChange}
               placeholder="••••••••"
               accentColor={theme.accent}
+              bgColor={theme.modalBg || theme.background}
             />
           </FormGroup>
 
           <FormGroup>
-            <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
+            <Label htmlFor="confirmPassword" bgColor={theme.modalBg || theme.background}>Confirmar Contraseña</Label>
             <Input
               type="password"
               id="confirmPassword"
@@ -224,6 +249,7 @@ function SignUp() {
               onChange={handleChange}
               placeholder="••••••••"
               accentColor={theme.accent}
+              bgColor={theme.modalBg || theme.background}
             />
           </FormGroup>
 
@@ -234,7 +260,7 @@ function SignUp() {
           </Button>
         </form>
 
-        <LinkText accentColor={theme.accent}>
+        <LinkText accentColor={theme.accent} bgColor={theme.modalBg || theme.background}>
           ¿Ya tienes cuenta? <a href="/signin">Inicia sesión aquí</a>
         </LinkText>
       </FormBox>

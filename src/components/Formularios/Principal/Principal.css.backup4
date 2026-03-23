@@ -16,6 +16,9 @@
   padding: 20px 0;
   padding-left: 20px;
   width: 100%;
+}
+
+.contenedor {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-start;

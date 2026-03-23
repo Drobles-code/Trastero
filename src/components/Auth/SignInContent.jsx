@@ -65,7 +65,7 @@ const Input = styled.input`
 const Button = styled.button`
   width: 100%;
   padding: 14px;
-  background: ${props => props.accentColor || '#667eea'};
+  background: var(--accent-color, #667eea);
   color: white;
   border: none;
   border-radius: 8px;
@@ -76,7 +76,7 @@ const Button = styled.button`
 
   &:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px ${props => props.accentColor ? props.accentColor + '40' : 'rgba(102, 126, 234, 0.4)'};
+    box-shadow: 0 8px 20px var(--accent-color, rgba(102, 126, 234, 0.4));
   }
 
   &:disabled {
@@ -97,7 +97,7 @@ const LinkText = styled.p`
   font-size: 14px;
 
   a {
-    color: ${props => props.accentColor || '#667eea'};
+    color: var(--accent-color, #667eea);
     font-weight: 600;
     cursor: pointer;
 

@@ -25,6 +25,18 @@ export function ThemeProvider({ children }) {
     }
   }, []);
 
+  // Actualizar CSS variables cuando cambia el tema
+  useEffect(() => {
+    if (theme) {
+      const root = document.documentElement;
+      root.style.setProperty('--accent-color', theme.accent);
+      root.style.setProperty('--background-color', theme.background);
+      root.style.setProperty('--modal-bg-color', theme.modalBg);
+      root.style.setProperty('--text-color', theme.text);
+      root.style.setProperty('--navbar-color', theme.navbar);
+    }
+  }, [theme]);
+
   const updateTheme = (newTheme) => {
     setTheme(newTheme);
     localStorage.setItem('appTheme', JSON.stringify(newTheme));
