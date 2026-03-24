@@ -35,14 +35,16 @@ class Principal extends Component {
   //------------------------------------------------------------
   render(){
    return (
-      <div >
+      <div>
         <div className='head'>
           <Buscador  datosBusqueda={this.datosBusqueda}/>
-        </div>    
+        </div>
         <div className='body'>
-           {this.state.tasks.map(task => <Cargaimg task={task} />)} 
-        </div>       
-    
+          <div className='principal'>
+              {this.state.tasks.map(task => <Cargaimg task={task} />)}
+           </div>
+        </div>
+
       </div>
      )
   }

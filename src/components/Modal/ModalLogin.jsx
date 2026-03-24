@@ -91,9 +91,24 @@ function ModalLogin({ isOpen, onClose, children }) {
     }
   };
 
+  // Función para determinar si un color es claro u oscuro
+  const getContrastColor = (hexColor) => {
+    const hex = hexColor.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    const luminancia = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminancia > 0.5 ? '#000000' : '#ffffff';
+  };
+
+  // Si el modalBg es demasiado claro, usar un oscuro por defecto
+  const modalBgColor = theme.modalBg || '#1a1a1a';
+  const isDarkBg = getContrastColor(modalBgColor) === '#ffffff';
+  const finalBgColor = isDarkBg ? modalBgColor : '#1a1a1a';
+
   return (
     <Overlay onClick={handleOverlayClick}>
-      <ModalContent bgColor={theme.modalBg || 'white'}>
+      <ModalContent bgColor={finalBgColor}>
         <CloseButton onClick={onClose} title="Cerrar">
           ✕
         </CloseButton>
