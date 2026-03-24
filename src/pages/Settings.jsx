@@ -3,14 +3,26 @@ import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { ThemeContext } from '../context/ThemeContext';
 
+const getContrastColor = (hexColor) => {
+  const hex = hexColor.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  const luminancia = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminancia > 0.5 ? '#000000' : '#ffffff';
+};
+
 const Container = styled.div`
   max-width: 900px;
   margin: 0 auto;
   padding: 40px 20px;
+  background-color: ${props => props.bgColor};
+  min-height: 80vh;
+  transition: background-color 0.3s ease;
 `;
 
 const Title = styled.h1`
-  color: #fff;
+  color: ${props => getContrastColor(props.bgColor || '#ffffff')};
   font-size: 32px;
   margin-bottom: 30px;
   text-align: center;
@@ -24,15 +36,16 @@ const SettingsGrid = styled.div`
 `;
 
 const SettingCard = styled.div`
-  background: #1a1a1a;
+  background: ${props => props.bgColor};
   padding: 25px;
   border-radius: 10px;
-  border: 1px solid #333;
+  border: 1px solid ${props => props.borderColor || '#333'};
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  transition: background-color 0.3s ease;
 `;
 
 const SettingTitle = styled.h2`
-  color: #fff;
+  color: ${props => getContrastColor(props.bgColor || '#ffffff')};
   font-size: 18px;
   margin-bottom: 20px;
   text-transform: uppercase;
@@ -218,6 +231,7 @@ function Settings() {
       background: '#000',
       text: '#fff',
       accent: '#667eea',
+      modalBg: '#1a1a1a',
     });
   };
 
@@ -234,13 +248,13 @@ function Settings() {
   ];
 
   return (
-    <Container>
-      <Title>⚙️ Configuración de Tema</Title>
+    <Container bgColor={localTheme.background}>
+      <Title bgColor={localTheme.background}>⚙️ Configuración de Tema</Title>
 
       <SettingsGrid>
         {/* TEMAS PREDEFINIDOS */}
-        <SettingCard>
-          <SettingTitle>Temas Predefinidos</SettingTitle>
+        <SettingCard bgColor={localTheme.modalBg} borderColor={localTheme.accent}>
+          <SettingTitle bgColor={localTheme.modalBg}>Temas Predefinidos</SettingTitle>
           {themes.slice(0, 5).map((t, idx) => (
             <ThemeOption
               key={idx}
@@ -255,8 +269,8 @@ function Settings() {
         </SettingCard>
 
         {/* COLOR DEL NAVBAR */}
-        <SettingCard>
-          <SettingTitle>Color Barra Superior</SettingTitle>
+        <SettingCard bgColor={localTheme.modalBg} borderColor={localTheme.accent}>
+          <SettingTitle bgColor={localTheme.modalBg}>Color Barra Superior</SettingTitle>
           <ColorGrid>
             {colors.map((color) => (
               <ColorOption
@@ -272,8 +286,8 @@ function Settings() {
         </SettingCard>
 
         {/* COLOR DEL FONDO */}
-        <SettingCard>
-          <SettingTitle>Color Fondo Principal</SettingTitle>
+        <SettingCard bgColor={localTheme.modalBg} borderColor={localTheme.accent}>
+          <SettingTitle bgColor={localTheme.modalBg}>Color Fondo Principal</SettingTitle>
           <ColorGrid>
             {colors.map((color) => (
               <ColorOption
@@ -289,8 +303,8 @@ function Settings() {
         </SettingCard>
 
         {/* COLOR DE TEXTO */}
-        <SettingCard>
-          <SettingTitle>Color Texto</SettingTitle>
+        <SettingCard bgColor={localTheme.modalBg} borderColor={localTheme.accent}>
+          <SettingTitle bgColor={localTheme.modalBg}>Color Texto</SettingTitle>
           <ColorGrid>
             {colors.map((color) => (
               <ColorOption
@@ -306,8 +320,8 @@ function Settings() {
         </SettingCard>
 
         {/* COLOR ACENTO */}
-        <SettingCard>
-          <SettingTitle>Color Acentos y Botones</SettingTitle>
+        <SettingCard bgColor={localTheme.modalBg} borderColor={localTheme.accent}>
+          <SettingTitle bgColor={localTheme.modalBg}>Color Acentos y Botones</SettingTitle>
           <ColorGrid>
             {[
               { name: 'Púrpura', hex: '#667eea' },
@@ -330,8 +344,8 @@ function Settings() {
         </SettingCard>
 
         {/* COLOR FONDO MODAL */}
-        <SettingCard>
-          <SettingTitle>Color Fondo Modal</SettingTitle>
+        <SettingCard bgColor={localTheme.modalBg} borderColor={localTheme.accent}>
+          <SettingTitle bgColor={localTheme.modalBg}>Color Fondo Modal</SettingTitle>
           <ColorGrid>
             {[
               { name: 'Blanco', hex: '#ffffff' },
@@ -354,8 +368,8 @@ function Settings() {
         </SettingCard>
 
         {/* VISTA PREVIA */}
-        <SettingCard>
-          <SettingTitle>Vista Previa</SettingTitle>
+        <SettingCard bgColor={localTheme.modalBg} borderColor={localTheme.accent}>
+          <SettingTitle bgColor={localTheme.modalBg}>Vista Previa</SettingTitle>
           <PreviewBox
             bgColor={localTheme.navbar}
             textColor={localTheme.text}

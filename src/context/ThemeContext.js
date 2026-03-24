@@ -7,7 +7,7 @@ const defaultTheme = {
   background: '#000',
   text: '#fff',
   accent: '#667eea',
-  modalBg: '#ffffff',
+  modalBg: '#1a1a1a',
 };
 
 export function ThemeProvider({ children }) {
