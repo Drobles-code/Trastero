@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ThemeContext } from '../../../context/ThemeContext';
 import ModalLogin from '../../Modal/ModalLogin';
 import SignInContent from '../../Auth/SignInContent';
+import SignUpContent from '../../Auth/SignUpContent';
 import ContactContent from '../../Content/ContactContent';
 import AboutContent from '../../Content/AboutContent';
 
@@ -16,6 +17,7 @@ const NavBar = styled.nav`
   top: 0;
   z-index: 100;
   transition: background-color 0.3s ease, border-color 0.3s ease;
+  overflow: visible;
 `;
 
 const NavContainer = styled.div`
@@ -36,19 +38,21 @@ const LeftSection = styled.div`
 const RightSection = styled.div`
   position: absolute;
   right: 30px;
-  top: ${props => props.active ? '65px' : '-300px'};
+  top: 65px;
   flex-direction: column;
   background-color: #222;
   width: auto;
   min-width: 180px;
   text-align: right;
-  transition: top 0.3s ease;
   padding: 15px 20px;
   gap: 0;
   border: 1px solid #444;
   border-radius: 5px;
-  display: flex;
+  display: ${props => props.active ? 'flex' : 'none'};
   align-items: flex-end;
+  transition: opacity 0.3s ease;
+  opacity: ${props => props.active ? '1' : '0'};
+  z-index: 999;
 `;
 
 const Logo = styled(Link)`
@@ -179,6 +183,7 @@ function Navbar({ user, onLogout, onLogin }) {
   const [showSignInModal, setShowSignInModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
+  const [authMode, setAuthMode] = useState('signin'); // 'signin' o 'signup'
   const navigate = useNavigate();
   const { theme } = useContext(ThemeContext);
   const handleClick = () => setClick(!click);
@@ -193,20 +198,36 @@ function Navbar({ user, onLogout, onLogin }) {
   const handleSignInSuccess = (userData) => {
     onLogin(userData);
     setShowSignInModal(false);
+    setAuthMode('signin'); // Resetear al modo signin cuando se cierre
+    closeMobileMenu();
+    navigate('/profile');
+  };
+
+  const handleSignUpSuccess = (userData) => {
+    onLogin(userData);
+    setShowSignInModal(false);
+    setAuthMode('signin'); // Resetear al modo signin cuando se cierre
     closeMobileMenu();
     navigate('/profile');
   };
 
   return (
     <>
-      <ModalLogin isOpen={showSignInModal} onClose={() => setShowSignInModal(false)}>
-        <SignInContent
-          onLogin={handleSignInSuccess}
-          onSwitchToSignUp={() => {
-            setShowSignInModal(false);
-            navigate('/signup');
-          }}
-        />
+      <ModalLogin isOpen={showSignInModal} onClose={() => {
+        setShowSignInModal(false);
+        setAuthMode('signin'); // Resetear al modo signin cuando se cierre el modal
+      }}>
+        {authMode === 'signin' ? (
+          <SignInContent
+            onLogin={handleSignInSuccess}
+            onSwitchToSignUp={() => setAuthMode('signup')}
+          />
+        ) : (
+          <SignUpContent
+            onSignUp={handleSignUpSuccess}
+            onSwitchToSignIn={() => setAuthMode('signin')}
+          />
+        )}
       </ModalLogin>
 
       <ModalLogin isOpen={showAboutModal} onClose={() => setShowAboutModal(false)}>
@@ -274,12 +295,22 @@ function Navbar({ user, onLogout, onLogin }) {
                 </LogoutBtn>
               </UserSection>
             ) : (
-              <MenuButton accentColor={theme.accent} onClick={() => {
-                setShowSignInModal(true);
-                closeMobileMenu();
-              }}>
-                Iniciar Sesión
-              </MenuButton>
+              <>
+                <MenuButton accentColor={theme.accent} onClick={() => {
+                  setShowSignInModal(true);
+                  setAuthMode('signin');
+                  closeMobileMenu();
+                }}>
+                  Iniciar Sesión
+                </MenuButton>
+                <MenuButton accentColor={theme.accent} onClick={() => {
+                  setShowSignInModal(true);
+                  setAuthMode('signup');
+                  closeMobileMenu();
+                }}>
+                  Registrarse
+                </MenuButton>
+              </>
             )}
           </RightSection>
         </NavContainer>

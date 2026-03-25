@@ -3,6 +3,15 @@ import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { ThemeContext } from '../context/ThemeContext';
 
+const getContrastColor = (hexColor) => {
+  const hex = hexColor.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  const luminancia = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminancia > 0.5 ? '#000000' : '#ffffff';
+};
+
 const Container = styled.div`
   max-width: 900px;
   margin: 0 auto;
@@ -13,7 +22,7 @@ const Container = styled.div`
 `;
 
 const Title = styled.h1`
-  color: #333;
+  color: ${props => getContrastColor(props.bgColor || '#ffffff')};
   font-size: 32px;
   margin-bottom: 30px;
   text-align: center;
@@ -31,11 +40,13 @@ const ProfileSection = styled.div`
 `;
 
 const AvatarCard = styled.div`
-  background: white;
+  background: ${props => props.bgColor};
   padding: 30px;
   border-radius: 10px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
   text-align: center;
+  border: 1px solid ${props => props.borderColor || '#333'};
+  transition: background-color 0.3s ease;
 `;
 
 const Avatar = styled.img`
@@ -47,10 +58,12 @@ const Avatar = styled.img`
 `;
 
 const InfoCard = styled.div`
-  background: white;
+  background: ${props => props.bgColor};
   padding: 30px;
   border-radius: 10px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  border: 1px solid ${props => props.borderColor || '#333'};
+  transition: background-color 0.3s ease;
 `;
 
 const InfoGroup = styled.div`
@@ -67,7 +80,7 @@ const Label = styled.label`
 `;
 
 const Value = styled.p`
-  color: #333;
+  color: ${props => getContrastColor(props.bgColor || '#ffffff')};
   font-size: 18px;
   margin: 0;
   font-weight: 500;
@@ -192,19 +205,19 @@ function Profile({ user }) {
 
   return (
     <Container bgColor={theme.background}>
-      <Title>Mi Perfil</Title>
+      <Title bgColor={theme.background}>Mi Perfil</Title>
 
       <ProfileSection>
-        <AvatarCard>
+        <AvatarCard bgColor={theme.modalBg} borderColor={theme.accent}>
           <Avatar src={user.avatar} alt={user.name} accentColor={theme.accent} />
-          <h3>{user.name}</h3>
-          <p style={{ color: '#999', marginBottom: '20px' }}>{user.email}</p>
+          <h3 style={{ color: getContrastColor(theme.modalBg) }}>{user.name}</h3>
+          <p style={{ color: getContrastColor(theme.modalBg), marginBottom: '20px' }}>{user.email}</p>
           <Button primary accentColor={theme.accent} onClick={handleEdit}>
             {isEditing ? 'Cancelar Edición' : 'Editar Perfil'}
           </Button>
         </AvatarCard>
 
-        <InfoCard>
+        <InfoCard bgColor={theme.modalBg} borderColor={theme.accent}>
           {isEditing ? (
             <>
               <InfoGroup>
@@ -246,31 +259,31 @@ function Profile({ user }) {
             <>
               <InfoGroup>
                 <Label accentColor={theme.accent}>Nombre Completo</Label>
-                <Value>{user.name}</Value>
+                <Value bgColor={theme.modalBg}>{user.name}</Value>
               </InfoGroup>
 
               <InfoGroup>
                 <Label accentColor={theme.accent}>Correo Electrónico</Label>
-                <Value>{user.email}</Value>
+                <Value bgColor={theme.modalBg}>{user.email}</Value>
               </InfoGroup>
 
               <InfoGroup>
                 <Label accentColor={theme.accent}>Miembro Desde</Label>
-                <Value>{new Date().toLocaleDateString('es-ES')}</Value>
+                <Value bgColor={theme.modalBg}>{new Date().toLocaleDateString('es-ES')}</Value>
               </InfoGroup>
 
               <InfoGroup>
                 <Label accentColor={theme.accent}>Estado</Label>
-                <Value style={{ color: '#27ae60' }}>✓ Activo</Value>
+                <Value bgColor={theme.modalBg} style={{ color: '#27ae60' }}>✓ Activo</Value>
               </InfoGroup>
             </>
           )}
         </InfoCard>
       </ProfileSection>
 
-      <AvatarCard>
-        <h3>Configuración de Cuenta</h3>
-        <p style={{ color: '#666', marginBottom: '20px' }}>
+      <AvatarCard bgColor={theme.modalBg} borderColor={theme.accent}>
+        <h3 style={{ color: getContrastColor(theme.modalBg) }}>Configuración de Cuenta</h3>
+        <p style={{ color: getContrastColor(theme.modalBg), marginBottom: '20px' }}>
           Opciones adicionales y preferencias de tu cuenta
         </p>
         <ButtonGroup>
