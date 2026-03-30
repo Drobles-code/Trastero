@@ -104,6 +104,7 @@ const Input = styled.input`
 
 const ButtonGroup = styled.div`
   display: flex;
+  justify-content: center;
   gap: 10px;
   margin-top: 20px;
 `;
@@ -116,7 +117,7 @@ const Button = styled.button`
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
-
+  width: 30%;
   ${props => props.primary ? `
     background: ${props.accentColor || '#667eea'};
     color: white;

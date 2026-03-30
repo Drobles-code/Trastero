@@ -119,12 +119,13 @@ const PreviewBox = styled.div`
 
 const ButtonGroup = styled.div`
   display: flex;
+  justify-content:center;
   gap: 15px;
   margin-top: 30px;
 `;
 
 const Button = styled.button`
-  flex: 1;
+  
   padding: 14px;
   border: none;
   border-radius: 8px;
@@ -132,6 +133,7 @@ const Button = styled.button`
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
+  width:30%;
 
   ${props => props.primary ? `
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
