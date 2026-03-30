@@ -12,15 +12,15 @@
     }
     /* titulo del trastero  rgb(0, 26, 255);*/
     .backgroundTitle{
-        border-radius: 8px 8px 1px 1px; 
-        color: yellow;
+        border-radius: 8px 8px 1px 1px;
+        color: var(--accent-color);
         font-size: 15px;
         font-weight: bold;
         z-index: 15;
       }
 
       .titulo-tras{
-        background-color: rgb(25 29 68); 
+        background-color: var(--card-title-color);
         border-radius: 8px 8px 0px 0px;
         text-align-last: start;
         border: 2px solid rgb(247 247 251);

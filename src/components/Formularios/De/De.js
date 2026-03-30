@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useParams } from 'react-router-dom';
 import { ThemeContext } from '../../../context/ThemeContext';
@@ -54,28 +54,46 @@ const LoadingMessage = styled.div`
 const De = () => {
   const { nombre: nombreParam } = useParams();
   const { theme } = useContext(ThemeContext);
-  const [searchTerm, setSearchTerm] = useState(nombreParam || '');
 
-  const url = `https://pixabay.com/api/?key=1732750-d45b5378879d1e877cd1d35a6&q=${searchTerm}&per_page=30`;
-
+  const url = `https://pixabay.com/api/?key=1732750-d45b5378879d1e877cd1d35a6&q=${nombreParam}&per_page=30`;
   const res = useFetch(url, {});
 
-  const handleSearch = (termino) => {
-    setSearchTerm(termino);
+  const [allHits, setAllHits] = useState([]);
+  const [visibleHits, setVisibleHits] = useState([]);
+
+  useEffect(() => {
+    if (res.response && res.response.hits) {
+      setAllHits(res.response.hits);
+      setVisibleHits(res.response.hits);
+    }
+  }, [res.response]);
+
+  const filtradoLocal = (termino) => {
+    if (termino === '') {
+      setVisibleHits(allHits);
+    } else {
+      setVisibleHits(allHits.filter(hit =>
+        hit.user.toLowerCase().includes(termino.toLowerCase())
+      ));
+    }
+  };
+
+  const buscarEnBD = (termino) => {
+    filtradoLocal(termino);
   };
 
   return (
     <Container bgColor={theme.background}>
       <HeadUser bgColor={theme.background}>
-        <Buscador datosBusqueda={handleSearch} />
+        <Buscador filtradoLocal={filtradoLocal} buscarEnBD={buscarEnBD} />
       </HeadUser>
       <BodyUser bgColor={theme.background}>
         {!res.response ? (
           <LoadingMessage bgColor={theme.background} textColor={theme.text}>
             Cargando...
           </LoadingMessage>
-        ) : res.response.hits && res.response.hits.length > 0 ? (
-          res.response.hits.map(task => <CargaImgUser key={task.id} task={task} />)
+        ) : visibleHits.length > 0 ? (
+          visibleHits.map(task => <CargaImgUser key={task.id} task={task} />)
         ) : (
           <LoadingMessage bgColor={theme.background} textColor={theme.text}>
             No se encontraron resultados

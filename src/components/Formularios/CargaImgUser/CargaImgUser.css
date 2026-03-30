@@ -71,19 +71,19 @@
   border-bottom: 2px solid rgb(247 247 251);
   border-left: 2px solid rgb(247 247 251);
   border-right: 2px solid rgb(247 247 251);
-  background-color: #040450;  
- } 
+  background-color: var(--background-color);
+ }
 
 .card-p {
 
   margin-top: -4px;
   margin-left: 5px;
-  background: #040450;   
+  background: var(--background-color);
   color:rgb(187, 228, 6);
   text-align: left;
 }
 .text-resaltado {
-  background: #040450;   
+  background: var(--background-color);
   color:white;
   font-size:16px;
   text-align: left;

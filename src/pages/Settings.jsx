@@ -163,6 +163,7 @@ function Settings() {
       text: '#fff',
       accent: '#667eea',
       modalBg: '#1a1a1a',
+      cardTitle: '#1a1a2e',
     },
     {
       name: 'Dark Blue',
@@ -171,6 +172,7 @@ function Settings() {
       text: '#e0e0e0',
       accent: '#00a8ff',
       modalBg: '#0f1419',
+      cardTitle: '#0a1628',
     },
     {
       name: 'Dark Green',
@@ -179,6 +181,7 @@ function Settings() {
       text: '#ffffff',
       accent: '#00d084',
       modalBg: '#0d1b0f',
+      cardTitle: '#0d1b0f',
     },
     {
       name: 'Dark Purple',
@@ -187,6 +190,7 @@ function Settings() {
       text: '#f5f5f5',
       accent: '#c200ff',
       modalBg: '#1a0a2e',
+      cardTitle: '#1a0a2e',
     },
     {
       name: 'Dark Red',
@@ -195,6 +199,7 @@ function Settings() {
       text: '#ffffff',
       accent: '#ff4444',
       modalBg: '#1a0000',
+      cardTitle: '#1a0000',
     },
     {
       name: 'Custom',
@@ -203,6 +208,7 @@ function Settings() {
       text: localTheme.text,
       accent: localTheme.accent,
       modalBg: localTheme.modalBg,
+      cardTitle: localTheme.cardTitle,
     },
   ];
 
@@ -232,6 +238,7 @@ function Settings() {
       text: '#fff',
       accent: '#667eea',
       modalBg: '#1a1a1a',
+      cardTitle: '#1a1a2e',
     });
   };
 
@@ -367,6 +374,30 @@ function Settings() {
           </ColorGrid>
         </SettingCard>
 
+        {/* COLOR TÍTULO TARJETA */}
+        <SettingCard bgColor={localTheme.modalBg} borderColor={localTheme.accent}>
+          <SettingTitle bgColor={localTheme.modalBg}>Color Título de Tarjeta</SettingTitle>
+          <ColorGrid>
+            {[
+              { name: 'Azul Noche', hex: '#1a1a2e' },
+              { name: 'Azul Marino', hex: '#0a1628' },
+              { name: 'Púrpura', hex: '#1a0a2e' },
+              { name: 'Verde Oscuro', hex: '#0d1b0f' },
+              { name: 'Rojo Oscuro', hex: '#1a0000' },
+              { name: 'Marrón', hex: '#2a1a00' },
+            ].map((color) => (
+              <ColorOption
+                key={color.hex}
+                color={color.hex}
+                selected={localTheme.cardTitle === color.hex}
+                onClick={() => handleColorChange('cardTitle', color.hex)}
+              >
+                <ColorLabel>{color.name}</ColorLabel>
+              </ColorOption>
+            ))}
+          </ColorGrid>
+        </SettingCard>
+
         {/* VISTA PREVIA */}
         <SettingCard bgColor={localTheme.modalBg} borderColor={localTheme.accent}>
           <SettingTitle bgColor={localTheme.modalBg}>Vista Previa</SettingTitle>
@@ -384,6 +415,14 @@ function Settings() {
             style={{ marginTop: '10px' }}
           >
             Contenido Principal
+          </PreviewBox>
+          <PreviewBox
+            bgColor={localTheme.cardTitle || '#1a1a2e'}
+            textColor={localTheme.accent}
+            borderColor={localTheme.accent}
+            style={{ marginTop: '10px' }}
+          >
+            Título de Tarjeta
           </PreviewBox>
           <PreviewBox
             bgColor={localTheme.accent}

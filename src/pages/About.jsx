@@ -14,28 +14,28 @@ const Container = styled.div`
 const Section = styled.section`
   margin-bottom: 40px;
   padding: 20px;
-  background: white;
+  background: var(--background-color);
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 `;
 
 const SectionTitle = styled.h2`
-  color: #667eea;
+  color: var(--accent-color);
   font-size: 24px;
   margin-bottom: 15px;
-  border-bottom: 3px solid #667eea;
+  border-bottom: 3px solid var(--accent-color);
   padding-bottom: 10px;
 `;
 
 const Text = styled.p`
-  color: #666;
+  color: var(--text-color);
   font-size: 16px;
   line-height: 1.8;
   margin-bottom: 15px;
 `;
 
 const List = styled.ul`
-  color: #666;
+  color: var(--text-color);
   margin-left: 20px;
   font-size: 16px;
   line-height: 1.8;

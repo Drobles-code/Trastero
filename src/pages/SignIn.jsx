@@ -14,7 +14,7 @@ const Container = styled.div`
 `;
 
 const FormBox = styled.div`
-  background: white;
+  background: var(--background-color);
   padding: 40px;
   border-radius: 10px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
@@ -24,7 +24,7 @@ const FormBox = styled.div`
 
 const Title = styled.h1`
   text-align: center;
-  color: #333;
+  color: var(--text-color);
   margin-bottom: 30px;
   font-size: 28px;
 `;
@@ -36,7 +36,7 @@ const FormGroup = styled.div`
 const Label = styled.label`
   display: block;
   margin-bottom: 8px;
-  color: #555;
+  color: var(--text-color);
   font-weight: 600;
   font-size: 14px;
 `;
@@ -47,8 +47,8 @@ const Input = styled.input`
   border: 2px solid #ddd;
   border-radius: 8px;
   font-size: 15px;
-  background-color: #f8f9fa;
-  color: #333;
+  background-color: var(--background-color);
+  color: var(--text-color);
   transition: all 0.3s;
   font-family: inherit;
 

@@ -8,6 +8,7 @@ const defaultTheme = {
   text: '#fff',
   accent: '#667eea',
   modalBg: '#1a1a1a',
+  cardTitle: '#1a1a2e',
 };
 
 export function ThemeProvider({ children }) {
@@ -34,6 +35,7 @@ export function ThemeProvider({ children }) {
       root.style.setProperty('--modal-bg-color', theme.modalBg);
       root.style.setProperty('--text-color', theme.text);
       root.style.setProperty('--navbar-color', theme.navbar);
+      root.style.setProperty('--card-title-color', theme.cardTitle || '#1a1a2e');
     }
   }, [theme]);
 

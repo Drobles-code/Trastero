@@ -14,7 +14,7 @@ const Container = styled.div`
 
 const Content = styled.div`
   text-align: center;
-  background: white;
+  background: var(--background-color);
   padding: 60px 40px;
   border-radius: 10px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
@@ -29,13 +29,13 @@ const Code = styled.h1`
 `;
 
 const Message = styled.p`
-  color: #333;
+  color: var(--text-color);
   font-size: 24px;
   margin: 20px 0;
 `;
 
 const Description = styled.p`
-  color: #666;
+  color: var(--text-color);
   font-size: 16px;
   margin: 20px 0 30px;
 `;

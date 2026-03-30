@@ -2,16 +2,16 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  background-color: rgb(12, 12, 12);
+  background-color: var(--background-color);
 }
 
 .head {
-  background-color: rgb(12, 12, 12);
+  background-color: var(--background-color);
   width: 100%;
 }
 
 .body {
-  background-color: rgb(12, 12, 12);
+  background-color: var(--background-color);
 }
 
 .principal {
@@ -22,7 +22,7 @@
   row-gap: 10px;
   padding: 20px 0 80px 0;
   min-height: 85vh;
-  background-color: rgb(12, 12, 12);
+  background-color: var(--background-color);
   align-content: start;
 }
 
