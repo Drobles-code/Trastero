@@ -49,6 +49,9 @@ const SettingCard = styled.div`
 
 const SettingTitle = styled.h2`
   color: ${props => getContrastColor(props.bgColor || '#ffffff')};
+
+
+  
   font-size: 18px;
   margin-bottom: 20px;
   text-transform: uppercase;

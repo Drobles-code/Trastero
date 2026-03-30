@@ -131,12 +131,13 @@ function SignIn({ onLogin }) {
   const navigate = useNavigate();
   const { theme } = useContext(ThemeContext);
 
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    // Validación simple
     if (!email || !password) {
       setError('Por favor completa todos los campos');
       setLoading(false);
@@ -144,21 +145,34 @@ function SignIn({ onLogin }) {
     }
 
     try {
-      // Simulación de login - reemplaza con tu API real
-      setTimeout(() => {
-        const userData = {
-          id: 1,
-          email,
-          name: email.split('@')[0],
-          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`
-        };
+      const res = await fetch(`${API_URL}/api/auth/login`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email, password }),
+      });
 
-        onLogin(userData);
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || 'Email o contraseña incorrectos');
         setLoading(false);
-        navigate('/profile');
-      }, 1000);
+        return;
+      }
+
+      // Guardar token en localStorage
+      localStorage.setItem('trastero_token', data.token);
+
+      onLogin({
+        id:     data.usuario.id,
+        email:  data.usuario.email,
+        name:   data.usuario.nombre,
+        avatar: data.usuario.avatar_url,
+      });
+
+      navigate('/profile');
     } catch (err) {
-      setError('Error en el inicio de sesión. Intenta de nuevo.');
+      setError('No se pudo conectar al servidor. Intenta de nuevo.');
+    } finally {
       setLoading(false);
     }
   };
