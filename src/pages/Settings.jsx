@@ -13,12 +13,15 @@ const getContrastColor = (hexColor) => {
 };
 
 const Container = styled.div`
-  max-width: 900px;
-  margin: 0 auto;
+  width: 100%;
   padding: 40px 20px;
   background-color: ${props => props.bgColor};
   min-height: 80vh;
   transition: background-color 0.3s ease;
+
+  @media (max-width: 768px) {
+    padding: 20px 12px;
+  }
 `;
 
 const Title = styled.h1`
@@ -30,8 +33,8 @@ const Title = styled.h1`
 
 const SettingsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 30px;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 20px;
   margin-bottom: 40px;
 `;
 
