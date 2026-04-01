@@ -119,41 +119,48 @@ function SignUpContent({ onSignUp, onSwitchToSignIn }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
 
     // Validación
     if (!name || !email || !password || !confirmPassword) {
       setError('Por favor completa todos los campos');
-      setLoading(false);
       return;
     }
 
     if (password !== confirmPassword) {
       setError('Las contraseñas no coinciden');
-      setLoading(false);
       return;
     }
 
     if (password.length < 6) {
       setError('La contraseña debe tener al menos 6 caracteres');
-      setLoading(false);
       return;
     }
 
+    setLoading(true);
     try {
-      setTimeout(() => {
-        const userData = {
-          id: 1,
-          email,
-          name,
-          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`
-        };
+      const res = await fetch('http://localhost:5000/api/auth/registro', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre: name, email, password }),
+      });
 
-        onSignUp(userData);
-        setLoading(false);
-      }, 1000);
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || 'Error en el registro');
+        return;
+      }
+
+      localStorage.setItem('trastero_token', data.token);
+      onSignUp({
+        id:     data.usuario.id,
+        name:   data.usuario.nombre,
+        email:  data.usuario.email,
+        avatar: data.usuario.avatar_url,
+      });
     } catch (err) {
-      setError('Error en el registro.');
+      setError('No se pudo conectar con el servidor');
+    } finally {
       setLoading(false);
     }
   };

@@ -117,28 +117,37 @@ function SignInContent({ onLogin, onSwitchToSignUp }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
 
     if (!email || !password) {
       setError('Por favor completa todos los campos');
-      setLoading(false);
       return;
     }
 
+    setLoading(true);
     try {
-      setTimeout(() => {
-        const userData = {
-          id: 1,
-          email,
-          name: email.split('@')[0],
-          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`
-        };
+      const res = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
 
-        onLogin(userData);
-        setLoading(false);
-      }, 1000);
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || 'Error en el inicio de sesión');
+        return;
+      }
+
+      localStorage.setItem('trastero_token', data.token);
+      onLogin({
+        id:     data.usuario.id,
+        name:   data.usuario.nombre,
+        email:  data.usuario.email,
+        avatar: data.usuario.avatar_url,
+      });
     } catch (err) {
-      setError('Error en el inicio de sesión.');
+      setError('No se pudo conectar con el servidor');
+    } finally {
       setLoading(false);
     }
   };

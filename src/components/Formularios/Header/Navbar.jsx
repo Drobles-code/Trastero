@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { Link, useNavigate } from 'react-router-dom';
 import { ThemeContext } from '../../../context/ThemeContext';
@@ -143,6 +143,23 @@ const HamburgerMenu = styled.button`
   cursor: pointer;
 `;
 
+const UserChip = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255,255,255,0.9);
+  font-size: 14px;
+  font-weight: 600;
+`;
+
+const ChipAvatar = styled.img`
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.4);
+  object-fit: cover;
+`;
+
 const UserSection = styled.div`
   display: flex;
   align-items: center;
@@ -183,11 +200,24 @@ function Navbar({ user, onLogout, onLogin }) {
   const [showSignInModal, setShowSignInModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
-  const [authMode, setAuthMode] = useState('signin'); // 'signin' o 'signup'
+  const [authMode, setAuthMode] = useState('signin');
   const navigate = useNavigate();
   const { theme } = useContext(ThemeContext);
+  const menuRef = useRef(null);
   const handleClick = () => setClick(!click);
   const closeMobileMenu = () => setClick(false);
+
+  // Cierra el menú al hacer clic fuera de él
+  useEffect(() => {
+    if (!click) return;
+    const handleOutsideClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setClick(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [click]);
 
   const handleLogout = () => {
     onLogout();
@@ -198,17 +228,17 @@ function Navbar({ user, onLogout, onLogin }) {
   const handleSignInSuccess = (userData) => {
     onLogin(userData);
     setShowSignInModal(false);
-    setAuthMode('signin'); // Resetear al modo signin cuando se cierre
+    setAuthMode('signin');
     closeMobileMenu();
-    navigate('/profile');
+    navigate('/');
   };
 
   const handleSignUpSuccess = (userData) => {
     onLogin(userData);
     setShowSignInModal(false);
-    setAuthMode('signin'); // Resetear al modo signin cuando se cierre
+    setAuthMode('signin');
     closeMobileMenu();
-    navigate('/profile');
+    navigate('/');
   };
 
   return (
@@ -239,16 +269,28 @@ function Navbar({ user, onLogout, onLogin }) {
       </ModalLogin>
 
       <NavBar navbarColor={theme.navbar} accentColor={theme.accent}>
-        <NavContainer>
+        <NavContainer ref={menuRef}>
           <LeftSection>
             <Logo to="/" onClick={closeMobileMenu}>
               📦 Trastero
             </Logo>
           </LeftSection>
 
-          <HamburgerMenu onClick={handleClick}>
-            {click ? '✕' : '☰'}
-          </HamburgerMenu>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {user && (
+              <UserChip
+                onClick={() => navigate('/profile')}
+                style={{ cursor: 'pointer' }}
+                title="Ver perfil"
+              >
+                <ChipAvatar src={user.avatar} alt={user.name} />
+                {user.name}
+              </UserChip>
+            )}
+            <HamburgerMenu onClick={handleClick}>
+              {click ? '✕' : '☰'}
+            </HamburgerMenu>
+          </div>
 
           <RightSection active={click}>
             <NavLink to="/" onClick={closeMobileMenu}>
