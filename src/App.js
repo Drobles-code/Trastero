@@ -57,7 +57,7 @@ function AppContent() {
             <Route path="/signup" element={<SignUp />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
-            <Route path="/profile" element={<Profile user={user} />} />
+            <Route path="/profile" element={<Profile user={user} onLogout={handleLogout} />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

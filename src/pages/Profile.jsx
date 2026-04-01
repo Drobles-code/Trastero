@@ -1,10 +1,10 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { ThemeContext } from '../context/ThemeContext';
 
 const getContrastColor = (hexColor) => {
-  const hex = hexColor.replace('#', '');
+  const hex = (hexColor || '#000000').replace('#', '');
   const r = parseInt(hex.substr(0, 2), 16);
   const g = parseInt(hex.substr(2, 2), 16);
   const b = parseInt(hex.substr(4, 2), 16);
@@ -12,291 +12,628 @@ const getContrastColor = (hexColor) => {
   return luminancia > 0.5 ? '#000000' : '#ffffff';
 };
 
-const Container = styled.div`
-  max-width: 900px;
+/* ─── Layout principal ─────────────────────────────────────── */
+
+const PageWrapper = styled.div`
+  max-width: 960px;
   margin: 0 auto;
-  padding: 40px 20px;
-  background-color: ${props => props.bgColor};
+  padding: 30px 20px 60px;
   min-height: 80vh;
-  transition: background-color 0.3s ease;
 `;
 
-const Title = styled.h1`
-  color: ${props => getContrastColor(props.bgColor || '#ffffff')};
-  font-size: 32px;
-  margin-bottom: 30px;
-  text-align: center;
+const Card = styled.div`
+  background: ${p => p.bg || 'transparent'};
+  border: 1px solid ${p => p.border || '#333'};
+  border-radius: 12px;
+  padding: ${p => p.pad || '24px'};
+  box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+  transition: background-color 0.3s;
 `;
 
-const ProfileSection = styled.div`
+const SectionTitle = styled.h2`
+  color: ${p => p.accent};
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0 0 18px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid ${p => p.accent}44;
+`;
+
+/* ─── Header card ──────────────────────────────────────────── */
+
+const HeaderCard = styled(Card)`
   display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 30px;
-  margin-bottom: 40px;
+  grid-template-columns: 1fr auto;
+  gap: 24px;
+  margin-bottom: 20px;
+  align-items: start;
 
-  @media (max-width: 768px) {
+  @media (max-width: 600px) {
     grid-template-columns: 1fr;
   }
 `;
 
-const AvatarCard = styled.div`
-  background: ${props => props.bgColor};
-  padding: 30px;
-  border-radius: 10px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-  text-align: center;
-  border: 1px solid ${props => props.borderColor || '#333'};
-  transition: background-color 0.3s ease;
+const UserInfo = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
 `;
 
-const Avatar = styled.img`
-  width: 120px;
-  height: 120px;
+const AvatarWrapper = styled.div`
+  position: relative;
+  flex-shrink: 0;
+`;
+
+const AvatarImg = styled.img`
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
-  margin-bottom: 20px;
-  border: 4px solid ${props => props.accentColor};
+  border: 3px solid ${p => p.accent};
+  object-fit: cover;
 `;
 
-const InfoCard = styled.div`
-  background: ${props => props.bgColor};
-  padding: 30px;
-  border-radius: 10px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-  border: 1px solid ${props => props.borderColor || '#333'};
-  transition: background-color 0.3s ease;
+const UserMeta = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 `;
 
-const InfoGroup = styled.div`
-  margin-bottom: 20px;
+const UserName = styled.h1`
+  color: ${p => getContrastColor(p.bg)};
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+`;
+
+const UserEmail = styled.p`
+  color: ${p => getContrastColor(p.bg)}aa;
+  font-size: 14px;
+  margin: 0;
+`;
+
+const TipoBadge = styled.span`
+  display: inline-block;
+  margin-top: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  background: ${p => p.accent}22;
+  color: ${p => p.accent};
+  border: 1px solid ${p => p.accent}55;
+  text-transform: capitalize;
+`;
+
+const HeaderActions = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+`;
+
+/* ─── Ranking ──────────────────────────────────────────────── */
+
+const RankingPanel = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 160px;
+
+  @media (max-width: 600px) {
+    flex-direction: row;
+    flex-wrap: wrap;
+    min-width: unset;
+  }
+`;
+
+const RankBadge = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: ${p => p.bg}cc;
+  border: 1px solid ${p => p.border || '#333'};
+  border-radius: 8px;
+  padding: 8px 12px;
+`;
+
+const RankIcon = styled.span`
+  font-size: 18px;
+  line-height: 1;
+`;
+
+const RankInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const RankLabel = styled.span`
+  font-size: 11px;
+  color: ${p => getContrastColor(p.bg)}88;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+`;
+
+const RankValue = styled.span`
+  font-size: 18px;
+  font-weight: 700;
+  color: ${p => p.accent};
+  line-height: 1.2;
+`;
+
+/* ─── Secciones inferiores ─────────────────────────────────── */
+
+const BodyGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+/* ─── Formulario ───────────────────────────────────────────── */
+
+const FormGroup = styled.div`
+  margin-bottom: 16px;
+`;
+
+const TwoCol = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 `;
 
 const Label = styled.label`
   display: block;
-  margin-bottom: 8px;
-  color: ${props => props.accentColor};
+  margin-bottom: 6px;
+  color: ${p => getContrastColor(p.bg)}99;
+  font-size: 12px;
   font-weight: 600;
-  font-size: 14px;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 `;
 
-const Value = styled.p`
-  color: ${props => getContrastColor(props.bgColor || '#ffffff')};
-  font-size: 18px;
-  margin: 0;
-  font-weight: 500;
+const inputBase = `
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 7px;
+  font-size: 14px;
+  box-sizing: border-box;
+  transition: all 0.2s;
+  font-family: inherit;
 `;
 
 const Input = styled.input`
-  width: 100%;
-  padding: 12px;
-  border: 2px solid #e0e0e0;
-  border-radius: 5px;
-  font-size: 14px;
-  transition: border-color 0.3s;
-  font-family: inherit;
+  ${inputBase}
+  background: ${p => p.editing ? (getContrastColor(p.bg) === '#ffffff' ? '#2a2a2a' : '#f0f0f0') : 'transparent'};
+  border: ${p => p.editing
+    ? `2px solid ${getContrastColor(p.bg) === '#ffffff' ? '#555' : '#ccc'}`
+    : '2px solid transparent'};
+  color: ${p => getContrastColor(p.bg)};
+  cursor: ${p => p.editing ? 'text' : 'default'};
+  pointer-events: ${p => p.editing ? 'auto' : 'none'};
 
   &:focus {
     outline: none;
-    border-color: ${props => props.accentColor};
-    box-shadow: 0 0 0 3px ${props => props.accentColor ? props.accentColor + '20' : 'rgba(102, 126, 234, 0.1)'};
+    border-color: ${p => p.accent};
+    box-shadow: 0 0 0 3px ${p => p.accent}33;
+  }
+
+  &::placeholder {
+    color: ${p => getContrastColor(p.bg)}44;
   }
 `;
 
-const ButtonGroup = styled.div`
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 20px;
+const Select = styled.select`
+  ${inputBase}
+  background: ${p => p.editing ? (getContrastColor(p.bg) === '#ffffff' ? '#2a2a2a' : '#f0f0f0') : 'transparent'};
+  border: ${p => p.editing
+    ? `2px solid ${getContrastColor(p.bg) === '#ffffff' ? '#555' : '#ccc'}`
+    : '2px solid transparent'};
+  color: ${p => getContrastColor(p.bg)};
+  cursor: ${p => p.editing ? 'pointer' : 'default'};
+  pointer-events: ${p => p.editing ? 'auto' : 'none'};
+  appearance: ${p => p.editing ? 'auto' : 'none'};
+
+  &:focus {
+    outline: none;
+    border-color: ${p => p.accent};
+    box-shadow: 0 0 0 3px ${p => p.accent}33;
+  }
+
+  option {
+    background: #1a1a1a;
+    color: #fff;
+  }
 `;
 
-const Button = styled.button`
-  padding: 12px 24px;
-  border: none;
-  border-radius: 5px;
-  font-size: 14px;
+/* ─── Botones ──────────────────────────────────────────────── */
+
+const Btn = styled.button`
+  padding: 9px 20px;
+  border-radius: 7px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s;
-  width: 30%;
-  ${props => props.primary ? `
-    background: ${props.accentColor || '#667eea'};
-    color: white;
+  border: none;
+  transition: all 0.2s;
 
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px ${props.accentColor ? props.accentColor + '66' : 'rgba(102, 126, 234, 0.4)'};
-    }
-  ` : `
-    background: #f0f0f0;
-    color: #333;
-
-    &:hover {
-      background: #e0e0e0;
-    }
+  ${p => p.variant === 'primary' && `
+    background: ${p.accent};
+    color: #fff;
+    &:hover { opacity: 0.85; transform: translateY(-1px); }
+  `}
+  ${p => p.variant === 'ghost' && `
+    background: transparent;
+    color: ${getContrastColor(p.bg || '#000')}99;
+    border: 1px solid ${getContrastColor(p.bg || '#000')}33;
+    &:hover { background: ${getContrastColor(p.bg || '#000')}11; }
+  `}
+  ${p => p.variant === 'danger' && `
+    background: #e74c3c;
+    color: #fff;
+    &:hover { background: #c0392b; }
   `}
 `;
 
-const LogoutButton = styled(Button)`
-  background: #e74c3c;
-  color: white;
-  margin-top: 20px;
-  width: 100%;
+/* ─── Pantalla protegida ───────────────────────────────────── */
 
-  &:hover {
-    background: #c0392b;
-    transform: none;
-  }
-`;
-
-const ProtectedMessage = styled.div`
-  background: #fff3cd;
-  border: 1px solid #ffc107;
-  color: #856404;
-  padding: 15px;
-  border-radius: 5px;
+const ProtectedScreen = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 16px;
   text-align: center;
-  margin-bottom: 20px;
 `;
 
-function Profile({ user }) {
+const LockIcon = styled.div`
+  font-size: 56px;
+  margin-bottom: 8px;
+`;
+
+const ProtectedTitle = styled.h2`
+  color: ${p => getContrastColor(p.bg)};
+  font-size: 22px;
+  margin: 0;
+`;
+
+const ProtectedSub = styled.p`
+  color: ${p => getContrastColor(p.bg)}88;
+  font-size: 15px;
+  margin: 0;
+  max-width: 320px;
+`;
+
+/* ─── Tipos de vía ─────────────────────────────────────────── */
+
+const TIPOS_VIA = [
+  'Calle', 'Avenida', 'Paseo', 'Plaza', 'Carretera',
+  'Autovía', 'Autopista', 'Camino', 'Ronda', 'Travesía',
+  'Vía', 'Callejón', 'Bulevar',
+];
+
+/* ─── Componente principal ─────────────────────────────────── */
+
+function Profile({ user, onLogout }) {
   const navigate = useNavigate();
   const { theme } = useContext(ThemeContext);
+  const bg = theme.modalBg;
+  const acc = theme.accent;
+
   const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState({
-    name: user?.name || '',
-    email: user?.email || ''
+  const [profileData, setProfileData] = useState({
+    nombre: '',
+    telefono: '',
+    tipoUsuario: 'persona',
+    personaContacto: '',
+    tipoVia: 'Calle',
+    nombreVia: '',
+    numero: '',
+    piso: '',
+    puerta: '',
+    codigoPostal: '',
+    pais: 'España',
+  });
+  const [draft, setDraft] = useState(profileData);
+
+  // Ranking (de API en el futuro, por ahora desde localStorage o ceros)
+  const [ranking] = useState({
+    vendidos: 0,
+    reclamaciones: 0,
+    devueltos: 0,
+    recomendados: 0,
   });
 
+  // Cargar perfil guardado
+  useEffect(() => {
+    if (!user) return;
+    try {
+      const saved = localStorage.getItem(`userProfile_${user.id}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setProfileData(parsed);
+        setDraft(parsed);
+      } else {
+        const base = { ...profileData, nombre: user.name || '' };
+        setProfileData(base);
+        setDraft(base);
+      }
+    } catch (e) { /* sin datos guardados */ }
+  }, [user]);
+
+  /* ── Pantalla de acceso restringido ── */
   if (!user) {
     return (
-      <Container bgColor={theme.background}>
-        <ProtectedMessage>
-          ⚠️ Debes iniciar sesión para ver tu perfil.
-          <div style={{ marginTop: '15px' }}>
-            <Button primary accentColor={theme.accent} onClick={() => navigate('/signin')}>
-              Ir a Iniciar Sesión
-            </Button>
-          </div>
-        </ProtectedMessage>
-      </Container>
+      <PageWrapper>
+        <ProtectedScreen>
+          <LockIcon>🔒</LockIcon>
+          <ProtectedTitle bg={theme.background}>Acceso restringido</ProtectedTitle>
+          <ProtectedSub bg={theme.background}>
+            Necesitas iniciar sesión para ver tu perfil.
+          </ProtectedSub>
+          <Btn variant="primary" accent={acc} onClick={() => navigate('/')}>
+            Ir al inicio
+          </Btn>
+        </ProtectedScreen>
+      </PageWrapper>
     );
   }
 
-  const handleEdit = () => {
-    setIsEditing(!isEditing);
-  };
-
+  /* ── Handlers ── */
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setEditData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setDraft(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleEdit = () => {
+    setDraft(profileData);
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    setDraft(profileData);
+    setIsEditing(false);
   };
 
   const handleSave = () => {
-    // Aquí iría la lógica para guardar cambios en una API
+    setProfileData(draft);
+    localStorage.setItem(`userProfile_${user.id}`, JSON.stringify(draft));
     setIsEditing(false);
   };
 
   const handleLogout = () => {
+    if (onLogout) onLogout();
     navigate('/');
-    window.location.reload();
   };
 
+  const data = isEditing ? draft : profileData;
+
   return (
-    <Container bgColor={theme.background}>
-      <Title bgColor={theme.background}>Mi Perfil</Title>
+    <PageWrapper>
 
-      <ProfileSection>
-        <AvatarCard bgColor={theme.modalBg} borderColor={theme.accent}>
-          <Avatar src={user.avatar} alt={user.name} accentColor={theme.accent} />
-          <h3 style={{ color: getContrastColor(theme.modalBg) }}>{user.name}</h3>
-          <p style={{ color: getContrastColor(theme.modalBg), marginBottom: '20px' }}>{user.email}</p>
-          <Button primary accentColor={theme.accent} onClick={handleEdit}>
-            {isEditing ? 'Cancelar Edición' : 'Editar Perfil'}
-          </Button>
-        </AvatarCard>
+      {/* ── HEADER ── */}
+      <HeaderCard bg={bg} border={acc + '55'}>
+        <UserInfo>
+          <AvatarWrapper>
+            <AvatarImg
+              src={user.avatar}
+              alt={user.name}
+              accent={acc}
+            />
+          </AvatarWrapper>
+          <UserMeta>
+            <UserName bg={bg}>{data.nombre || user.name}</UserName>
+            <UserEmail bg={bg}>{user.email}</UserEmail>
+            <TipoBadge accent={acc}>
+              {data.tipoUsuario === 'empresa' ? '🏢 Empresa' : '👤 Persona'}
+            </TipoBadge>
+            <HeaderActions>
+              {isEditing ? (
+                <>
+                  <Btn variant="primary" accent={acc} onClick={handleSave}>
+                    Guardar
+                  </Btn>
+                  <Btn variant="ghost" bg={bg} onClick={handleCancel}>
+                    Cancelar
+                  </Btn>
+                </>
+              ) : (
+                <>
+                  <Btn variant="primary" accent={acc} onClick={handleEdit}>
+                    ✏️ Editar perfil
+                  </Btn>
+                  <Btn variant="danger" onClick={handleLogout}>
+                    Salir
+                  </Btn>
+                </>
+              )}
+            </HeaderActions>
+          </UserMeta>
+        </UserInfo>
 
-        <InfoCard bgColor={theme.modalBg} borderColor={theme.accent}>
-          {isEditing ? (
-            <>
-              <InfoGroup>
-                <Label accentColor={theme.accent} htmlFor="name">Nombre Completo</Label>
-                <Input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={editData.name}
-                  onChange={handleChange}
-                  placeholder="Tu nombre completo"
-                  accentColor={theme.accent}
-                />
-              </InfoGroup>
+        {/* ── RANKING ── */}
+        <RankingPanel>
+          <RankBadge bg={bg} border={acc + '33'}>
+            <RankIcon>📦</RankIcon>
+            <RankInfo>
+              <RankLabel bg={bg}>Vendidos</RankLabel>
+              <RankValue accent={acc}>{ranking.vendidos}</RankValue>
+            </RankInfo>
+          </RankBadge>
+          <RankBadge bg={bg} border="#e74c3c55">
+            <RankIcon>⚠️</RankIcon>
+            <RankInfo>
+              <RankLabel bg={bg}>Reclamaciones</RankLabel>
+              <RankValue accent="#e74c3c">{ranking.reclamaciones}</RankValue>
+            </RankInfo>
+          </RankBadge>
+          <RankBadge bg={bg} border="#f39c1255">
+            <RankIcon>↩️</RankIcon>
+            <RankInfo>
+              <RankLabel bg={bg}>Devueltos</RankLabel>
+              <RankValue accent="#f39c12">{ranking.devueltos}</RankValue>
+            </RankInfo>
+          </RankBadge>
+          <RankBadge bg={bg} border="#27ae6055">
+            <RankIcon>👍</RankIcon>
+            <RankInfo>
+              <RankLabel bg={bg}>Recomendado</RankLabel>
+              <RankValue accent="#27ae60">{ranking.recomendados}</RankValue>
+            </RankInfo>
+          </RankBadge>
+        </RankingPanel>
+      </HeaderCard>
 
-              <InfoGroup>
-                <Label accentColor={theme.accent} htmlFor="email">Correo Electrónico</Label>
-                <Input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={editData.email}
-                  onChange={handleChange}
-                  placeholder="tu@email.com"
-                  accentColor={theme.accent}
-                />
-              </InfoGroup>
+      {/* ── CUERPO ── */}
+      <BodyGrid>
 
-              <ButtonGroup>
-                <Button primary accentColor={theme.accent} onClick={handleSave}>
-                  Guardar Cambios
-                </Button>
-                <Button onClick={handleEdit}>
-                  Cancelar
-                </Button>
-              </ButtonGroup>
-            </>
-          ) : (
-            <>
-              <InfoGroup>
-                <Label accentColor={theme.accent}>Nombre Completo</Label>
-                <Value bgColor={theme.modalBg}>{user.name}</Value>
-              </InfoGroup>
+        {/* ── DATOS PERSONALES ── */}
+        <Card bg={bg} border={acc + '44'}>
+          <SectionTitle accent={acc}>Datos personales</SectionTitle>
 
-              <InfoGroup>
-                <Label accentColor={theme.accent}>Correo Electrónico</Label>
-                <Value bgColor={theme.modalBg}>{user.email}</Value>
-              </InfoGroup>
+          <FormGroup>
+            <Label bg={bg} htmlFor="nombre">Nombre completo</Label>
+            <Input
+              id="nombre" name="nombre" type="text"
+              value={data.nombre}
+              onChange={handleChange}
+              placeholder="Tu nombre completo"
+              editing={isEditing} bg={bg} accent={acc}
+            />
+          </FormGroup>
 
-              <InfoGroup>
-                <Label accentColor={theme.accent}>Miembro Desde</Label>
-                <Value bgColor={theme.modalBg}>{new Date().toLocaleDateString('es-ES')}</Value>
-              </InfoGroup>
+          <FormGroup>
+            <Label bg={bg} htmlFor="telefono">Teléfono</Label>
+            <Input
+              id="telefono" name="telefono" type="tel"
+              value={data.telefono}
+              onChange={handleChange}
+              placeholder="+34 600 000 000"
+              editing={isEditing} bg={bg} accent={acc}
+            />
+          </FormGroup>
 
-              <InfoGroup>
-                <Label accentColor={theme.accent}>Estado</Label>
-                <Value bgColor={theme.modalBg} style={{ color: '#27ae60' }}>✓ Activo</Value>
-              </InfoGroup>
-            </>
+          <FormGroup>
+            <Label bg={bg} htmlFor="tipoUsuario">Tipo de cuenta</Label>
+            <Select
+              id="tipoUsuario" name="tipoUsuario"
+              value={data.tipoUsuario}
+              onChange={handleChange}
+              editing={isEditing} bg={bg} accent={acc}
+            >
+              <option value="persona">Persona</option>
+              <option value="empresa">Empresa</option>
+            </Select>
+          </FormGroup>
+
+          {data.tipoUsuario === 'empresa' && (
+            <FormGroup>
+              <Label bg={bg} htmlFor="personaContacto">Persona de contacto</Label>
+              <Input
+                id="personaContacto" name="personaContacto" type="text"
+                value={data.personaContacto}
+                onChange={handleChange}
+                placeholder="Nombre del responsable"
+                editing={isEditing} bg={bg} accent={acc}
+              />
+            </FormGroup>
           )}
-        </InfoCard>
-      </ProfileSection>
+        </Card>
 
-      <AvatarCard bgColor={theme.modalBg} borderColor={theme.accent}>
-        <h3 style={{ color: getContrastColor(theme.modalBg) }}>Configuración de Cuenta</h3>
-        <p style={{ color: getContrastColor(theme.modalBg), marginBottom: '20px' }}>
-          Opciones adicionales y preferencias de tu cuenta
-        </p>
-        <ButtonGroup>
-          <Button accentColor={theme.accent}>Cambiar Contraseña</Button>
-          <Button accentColor={theme.accent}>Privacidad</Button>
-          <Button accentColor={theme.accent}>Notificaciones</Button>
-        </ButtonGroup>
-        <LogoutButton onClick={handleLogout}>
-          Cerrar Sesión
-        </LogoutButton>
-      </AvatarCard>
-    </Container>
+        {/* ── DIRECCIÓN ── */}
+        <Card bg={bg} border={acc + '44'}>
+          <SectionTitle accent={acc}>Dirección</SectionTitle>
+
+          <TwoCol>
+            <FormGroup>
+              <Label bg={bg} htmlFor="tipoVia">Tipo de vía</Label>
+              <Select
+                id="tipoVia" name="tipoVia"
+                value={data.tipoVia}
+                onChange={handleChange}
+                editing={isEditing} bg={bg} accent={acc}
+              >
+                {TIPOS_VIA.map(t => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </Select>
+            </FormGroup>
+
+            <FormGroup>
+              <Label bg={bg} htmlFor="numero">Número</Label>
+              <Input
+                id="numero" name="numero" type="text"
+                value={data.numero}
+                onChange={handleChange}
+                placeholder="12"
+                editing={isEditing} bg={bg} accent={acc}
+              />
+            </FormGroup>
+          </TwoCol>
+
+          <FormGroup>
+            <Label bg={bg} htmlFor="nombreVia">Nombre de la vía</Label>
+            <Input
+              id="nombreVia" name="nombreVia" type="text"
+              value={data.nombreVia}
+              onChange={handleChange}
+              placeholder="Gran Vía"
+              editing={isEditing} bg={bg} accent={acc}
+            />
+          </FormGroup>
+
+          <TwoCol>
+            <FormGroup>
+              <Label bg={bg} htmlFor="piso">Piso</Label>
+              <Input
+                id="piso" name="piso" type="text"
+                value={data.piso}
+                onChange={handleChange}
+                placeholder="3º"
+                editing={isEditing} bg={bg} accent={acc}
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label bg={bg} htmlFor="puerta">Puerta</Label>
+              <Input
+                id="puerta" name="puerta" type="text"
+                value={data.puerta}
+                onChange={handleChange}
+                placeholder="B"
+                editing={isEditing} bg={bg} accent={acc}
+              />
+            </FormGroup>
+          </TwoCol>
+
+          <TwoCol>
+            <FormGroup>
+              <Label bg={bg} htmlFor="codigoPostal">Código Postal</Label>
+              <Input
+                id="codigoPostal" name="codigoPostal" type="text"
+                value={data.codigoPostal}
+                onChange={handleChange}
+                placeholder="28001"
+                editing={isEditing} bg={bg} accent={acc}
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label bg={bg} htmlFor="pais">País</Label>
+              <Input
+                id="pais" name="pais" type="text"
+                value={data.pais}
+                onChange={handleChange}
+                placeholder="España"
+                editing={isEditing} bg={bg} accent={acc}
+              />
+            </FormGroup>
+          </TwoCol>
+        </Card>
+      </BodyGrid>
+    </PageWrapper>
   );
 }
 

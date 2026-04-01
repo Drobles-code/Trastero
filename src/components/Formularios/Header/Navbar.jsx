@@ -278,8 +278,8 @@ function Navbar({ user, onLogout, onLogin }) {
 
             {user ? (
               <UserSection>
-                <UserAvatar 
-                  src={user.avatar} 
+                <UserAvatar
+                  src={user.avatar}
                   alt={user.name}
                   title={user.name}
                   onClick={() => {
@@ -288,7 +288,7 @@ function Navbar({ user, onLogout, onLogin }) {
                   }}
                 />
                 <NavLink to="/profile" onClick={closeMobileMenu}>
-                  {user.name}
+                  👤 Mi Perfil
                 </NavLink>
                 <LogoutBtn onClick={handleLogout}>
                   Salir

@@ -19,10 +19,27 @@
         margin: 0;
         box-sizing: border-box;
       }
-    
+      html, body {
+        background-color: #0d0d0d;
+      }
     </style>
+    <!-- Aplica el tema guardado ANTES de que React cargue — evita destello blanco -->
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem('appTheme');
+          if (saved) {
+            var theme = JSON.parse(saved);
+            if (theme.background) {
+              document.documentElement.style.backgroundColor = theme.background;
+              document.body.style.backgroundColor = theme.background;
+            }
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
-  <body>
+  <body style="background-color: #0d0d0d;">
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"  style='margin-left: 20px; margin-top: 20px; margin-right:20px ;' ></div>
     <div id="portal" ></div>

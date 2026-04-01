@@ -7,13 +7,16 @@ import Cargaimg from '../Cargarimg/Cargaimg';
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 function Principal() {
-  const [allTasks, setAllTasks]       = useState([]);
-  const [tasks, setTasks]             = useState([]);
-  const [cargando, setCargando]       = useState(true);
+  // Muestra JSON local inmediatamente — sin esperar a la API
+  const [allTasks, setAllTasks] = useState(imagenjson);
+  const [tasks, setTasks]       = useState(imagenjson);
 
-  // Carga inicial desde API (o fallback a JSON si la API no responde)
+  // Intenta actualizar desde API en background (3s timeout)
   useEffect(() => {
-    fetch(`${API_URL}/api/trasteros`)
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+
+    fetch(`${API_URL}/api/trasteros`, { signal: controller.signal })
       .then(res => {
         if (!res.ok) throw new Error('API no disponible');
         return res.json();
@@ -22,12 +25,8 @@ function Principal() {
         setAllTasks(data);
         setTasks(data);
       })
-      .catch(() => {
-        // Fallback: datos locales del JSON mientras no hay servidor
-        setAllTasks(imagenjson);
-        setTasks(imagenjson);
-      })
-      .finally(() => setCargando(false));
+      .catch(() => { /* JSON local ya está visible */ })
+      .finally(() => clearTimeout(timeout));
   }, []);
 
   // Filtrado local en tiempo real (onChange del buscador)
@@ -65,10 +64,7 @@ function Principal() {
       </div>
       <div className='body'>
         <div className='principal'>
-          {cargando
-            ? <p style={{ color: 'var(--text-color)', padding: '20px' }}>Cargando...</p>
-            : tasks.map(task => <Cargaimg key={task.id || task.Nombre} task={task} />)
-          }
+          {tasks.map(task => <Cargaimg key={task.id || task.Nombre} task={task} />)}
         </div>
       </div>
     </div>
