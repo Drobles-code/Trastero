@@ -12,6 +12,8 @@ import Contact from './pages/Contact';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import NotFound from './pages/NotFound';
+import OpsLogin from './pages/OpsLogin';
+import OpsDashboard from './pages/OpsDashboard';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -59,6 +61,9 @@ function AppContent() {
             <Route path="/contact" element={<Contact />} />
             <Route path="/profile" element={<Profile user={user} onLogout={handleLogout} />} />
             <Route path="/settings" element={<Settings />} />
+            {/* Rutas de sistema — sin enlace en navbar */}
+            <Route path="/ops/login"     element={<OpsLogin />} />
+            <Route path="/ops/dashboard" element={<OpsDashboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </ContentWrapper>

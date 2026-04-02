@@ -62,6 +62,17 @@ CREATE TABLE IF NOT EXISTS preferencias_usuario (
   updated_at   TIMESTAMP DEFAULT NOW()
 );
 
+-- Operadores del sistema (mantenimiento — acceso separado de usuarios)
+CREATE TABLE IF NOT EXISTS sys_operators (
+  id         SERIAL PRIMARY KEY,
+  nombre     VARCHAR(255) NOT NULL,
+  email      VARCHAR(255) UNIQUE NOT NULL,
+  password   VARCHAR(255) NOT NULL,
+  activo     BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  last_login TIMESTAMP
+);
+
 -- Índices para búsqueda rápida
 CREATE INDEX IF NOT EXISTS idx_trasteros_nombre ON trasteros (LOWER(nombre));
 CREATE INDEX IF NOT EXISTS idx_trasteros_usuario ON trasteros (usuario_id);

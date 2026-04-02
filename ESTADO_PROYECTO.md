@@ -64,7 +64,7 @@ http://localhost:3000             → Pantalla principal con galería
 ```env
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=Trastero
+DB_NAME=trastero
 DB_USER=postgres
 DB_PASSWORD=<contraseña local — no en git>
 JWT_SECRET=<secreto local — no en git>
@@ -222,6 +222,32 @@ Trastero/
 │       └── trasteros.js       ← GET trasteros
 └── ESTADO_PROYECTO.md         ← este archivo (NO en git)
 ```
+
+---
+
+## 🔐 Sistema de operadores (mantenimiento)
+
+Acceso separado de usuarios normales — tabla `sys_operators`.
+
+| Item | Detalle |
+|---|---|
+| URL de acceso | `http://localhost:3000/ops/login` |
+| Ruta backend | `POST /api/ops/login` |
+| Middleware | `server/middleware/requireOperator.js` |
+| JWT | `{ tipo: 'operator' }` — incompatible con tokens de usuarios |
+| Dashboard | `/ops/dashboard` — stats + lista de usuarios |
+| Rutas protegidas | `GET /api/ops/usuarios`, `GET /api/ops/stats` |
+
+> La URL no aparece en ningún menú ni enlace de la app.
+> El bundle JS sí contiene la ruta — ver nota de seguridad abajo.
+
+### Nota de seguridad — inspección del bundle
+React incluye todas las rutas en el bundle JS del frontend.
+Alguien con conocimientos técnicos podría encontrar `/ops/login` inspeccionando el código.
+**Esto no es un problema real** porque:
+- La seguridad real está en el backend (bcrypt + JWT `tipo:'operator'`)
+- Sin credenciales válidas en `sys_operators`, la ruta es inútil
+- Para máxima seguridad futura: mover el panel admin a un subdominio/puerto separado
 
 ---
 
