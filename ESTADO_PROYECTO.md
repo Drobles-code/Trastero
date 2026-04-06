@@ -73,6 +73,11 @@ PORT=5000
 
 > Las contraseñas reales están solo en `server/.env` de tu PC. Créalo manualmente en cada máquina.
 
+**Frontend `.env.local`** (raíz del proyecto — tampoco en git):
+```env
+REACT_APP_API_URL=http://localhost:5000
+```
+
 ---
 
 ## 🗄️ Base de Datos — PostgreSQL
@@ -129,6 +134,17 @@ PORT=5000
 #### `preferencias_usuario`
 Guarda el tema de color por usuario (background, text, accent, modal, navbar, card_title).
 
+#### `sys_operators`
+| Campo | Tipo | Notas |
+|-------|------|-------|
+| id | SERIAL PK | |
+| nombre | VARCHAR(255) | |
+| email | VARCHAR(255) | UNIQUE |
+| password | VARCHAR(255) | bcrypt hash |
+| activo | BOOLEAN | default true |
+| created_at | TIMESTAMP | |
+| last_login | TIMESTAMP | se actualiza en cada login |
+
 ---
 
 ## 🌐 API — Endpoints
@@ -141,6 +157,9 @@ Guarda el tema de color por usuario (background, text, accent, modal, navbar, ca
 | GET | `/api/trasteros/:nombre` | — | Trastero individual |
 | POST | `/api/auth/login` | `{ email, password }` | `{ token, usuario }` |
 | POST | `/api/auth/registro` | `{ nombre, email, password }` | `{ token, usuario }` |
+| POST | `/api/ops/login` | `{ email, password }` | `{ token, operator }` — JWT tipo:'operator', expira 8h |
+| GET | `/api/ops/usuarios` | — (requiere token operator) | Lista de todos los usuarios |
+| GET | `/api/ops/stats` | — (requiere token operator) | `{ usuarios: N, trasteros: N }` |
 
 ### Formato de respuesta de trastero
 ```json
@@ -212,14 +231,19 @@ Trastero/
 │   │       └── Cargarimg/Cargaimg.js  ← tarjeta de trastero
 │   └── pages/
 │       ├── Profile.jsx        ← perfil completo (protegido)
-│       └── Settings.jsx       ← selector de tema
+│       ├── Settings.jsx       ← selector de tema
+│       ├── OpsLogin.jsx       ← login panel operadores (/ops/login)
+│       └── OpsDashboard.jsx   ← dashboard operadores (/ops/dashboard)
 ├── server/
 │   ├── server.js              ← Express app, puerto 5000
 │   ├── db.js                  ← pool PostgreSQL
 │   ├── .env                   ← credenciales (NO en git)
+│   ├── middleware/
+│   │   └── requireOperator.js ← verifica JWT tipo:'operator'
 │   └── routes/
-│       ├── auth.js            ← login + registro
-│       └── trasteros.js       ← GET trasteros
+│       ├── auth.js            ← login + registro usuarios
+│       ├── trasteros.js       ← GET trasteros
+│       └── ops.js             ← panel operadores (login, stats, usuarios)
 └── ESTADO_PROYECTO.md         ← este archivo (NO en git)
 ```
 
@@ -264,6 +288,8 @@ Alguien con conocimientos técnicos podría encontrar `/ops/login` inspeccionand
 - [x] Perfil completo: dirección, teléfono, tipo persona/empresa, ranking
 - [x] Tema global personalizable con localStorage
 - [x] Menú cierra al hacer clic fuera
+- [x] Panel de operadores interno (`/ops/login` + `/ops/dashboard`) — sin enlace en navbar
+- [x] Middleware `requireOperator` — JWT separado del de usuarios normales
 
 ---
 
