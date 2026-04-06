@@ -5,6 +5,7 @@ import { ThemeContext } from '../context/ThemeContext';
 import '../components/Formularios/Cargarimg/Cargaimg.css';
 import ModalSubir from '../components/Modal/ModalSubir';
 import ModalEditar from '../components/Modal/ModalEditar';
+import { formatExtra } from '../constants/categorias';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -20,8 +21,9 @@ const getContrastColor = (hexColor) => {
 /* ─── Layout ─────────────────────────────────────────────── */
 
 const PageWrapper = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
+  width: calc(100% + 40px);
+  margin-left: -20px;
+  margin-right: -20px;
   padding: 24px 20px 60px;
   min-height: 80vh;
 `;
@@ -31,6 +33,8 @@ const HeaderCard = styled.div`
   border: 1px solid ${p => p.accent}55;
   border-radius: 12px;
   padding: 20px 24px;
+  width: 100%;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -134,9 +138,12 @@ const FlatGrid = styled.div`
 const FlatCard = styled.div`
   position: relative;
   width: 249px;
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
   cursor: pointer;
+  background: ${p => p.bg};
+  border: 1px solid ${p => p.accent}22;
+  &:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.35); }
   &:hover .card-actions { opacity: 1; }
 `;
 
@@ -147,15 +154,36 @@ const FlatImg = styled.img`
   display: block;
 `;
 
-const FlatLabel = styled.div`
-  background: rgba(0,0,0,0.55);
-  color: #fff;
+const FlatInfo = styled.div`
+  padding: 8px 10px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+`;
+
+const FlatNombre = styled.div`
   font-size: 12px;
-  font-weight: 600;
-  padding: 6px 10px;
+  font-weight: 700;
+  color: ${p => p.color};
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+`;
+
+const FlatRow = styled.div`
+  font-size: 11px;
+  color: ${p => p.accent || p.color};
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  line-height: 1.4;
+`;
+
+const FlatPrice = styled.div`
+  font-size: 16px;
+  font-weight: 800;
+  color: ${p => p.accent};
+  line-height: 1.1;
 `;
 
 /* ─── Tarjeta ─────────────────────────────────────────────── */
@@ -355,6 +383,37 @@ const DetailActions = styled.div`
   justify-content: flex-end;
 `;
 
+const DetailPrice = styled.div`
+  font-size: 26px;
+  font-weight: 800;
+  color: ${p => p.accent};
+`;
+
+const DetailMeta = styled.div`
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+`;
+
+const MetaTag = styled.span`
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: ${p => p.accent ? p.accent + '22' : 'rgba(255,255,255,0.08)'};
+  color: ${p => p.accent ? p.accent : 'rgba(255,255,255,0.7)'};
+  border: 1px solid ${p => p.accent ? p.accent + '44' : 'rgba(255,255,255,0.15)'};
+`;
+
+const DetailDesc = styled.p`
+  color: ${p => p.color}bb;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-wrap;
+`;
+
 /* ─── Tarjeta ─────────────────────────────────────────────── */
 
 function TrasteroCard({ task, onDelete, onOpen, onEdit, theme }) {
@@ -486,10 +545,36 @@ function MiTrastero({ user }) {
           <DetailBox bg={bg} onClick={e => e.stopPropagation()}>
             <DetailClose onClick={() => setDetalle(null)}>✕</DetailClose>
             <DetailTitle color={getContrastColor(bg)}>{detalle.Nombre}</DetailTitle>
+
+            {/* Precio */}
+            {detalle.Precio !== null && detalle.Precio !== undefined && (
+              <DetailPrice accent={acc}>
+                {detalle.Precio.toLocaleString('es-ES', { minimumFractionDigits: 0 })} €
+              </DetailPrice>
+            )}
+
+            {/* Meta badges */}
+            {(detalle.Categoria || detalle.Subcategoria || detalle.Negociable || detalle.AceptaCambio || formatExtra(detalle.Extras)) && (
+              <DetailMeta>
+                {detalle.Subcategoria && <MetaTag accent={acc}>{detalle.Subcategoria}</MetaTag>}
+                {!detalle.Subcategoria && detalle.Categoria && <MetaTag accent={acc}>{detalle.Categoria}</MetaTag>}
+                {formatExtra(detalle.Extras) && <MetaTag>{formatExtra(detalle.Extras)}</MetaTag>}
+                {detalle.Negociable   && <MetaTag accent={acc}>Negociable</MetaTag>}
+                {detalle.AceptaCambio && <MetaTag accent={acc}>Acepta cambio</MetaTag>}
+              </DetailMeta>
+            )}
+
+            {/* Descripción */}
+            {detalle.Descripcion && (
+              <DetailDesc color={getContrastColor(bg)}>{detalle.Descripcion}</DetailDesc>
+            )}
+
+            {/* Grid de imágenes */}
             <DetailGrid
               ruta={detalle.Ruta}
               imgs={[detalle.Imagen1, detalle.Imagen2, detalle.Imagen3, detalle.Imagen4]}
             />
+
             <DetailActions>
               <ActionBtn accent={acc} onClick={() => { setDetalle(null); setEditar(detalle); }}>✏️ Editar</ActionBtn>
               <ActionBtn danger onClick={() => { setDetalle(null); setConfirmar(detalle); }}>
@@ -604,20 +689,43 @@ function MiTrastero({ user }) {
           {trasteros.flatMap(task =>
             [task.Imagen1, task.Imagen2, task.Imagen3, task.Imagen4]
               .filter(Boolean)
-              .map((img, i) => (
-                <FlatCard key={`${task.id}-${i}`} onClick={() => setDetalle(task)}>
-                  <FlatImg src={`${task.Ruta}/${img}`} alt={task.Nombre} loading="lazy" />
-                  <FlatLabel>{task.Nombre}</FlatLabel>
-                  <CardActions className="card-actions">
-                    <ActionBtn accent={acc} onClick={e => { e.stopPropagation(); setEditar(task); }}>
-                      ✏️ Editar
-                    </ActionBtn>
-                    <ActionBtn danger onClick={e => { e.stopPropagation(); setConfirmarImagen({ task, posicion: i + 1 }); }}>
-                      🗑️ Eliminar
-                    </ActionBtn>
-                  </CardActions>
-                </FlatCard>
-              ))
+              .map((img, i) => {
+                const bg2 = theme.modalBg || '#1a1a1a';
+                const txt = getContrastColor(bg2);
+                const precio = task.Precio !== null && task.Precio !== undefined
+                  ? task.Precio.toLocaleString('es-ES', { minimumFractionDigits: 0 }) + ' €'
+                  : null;
+                const extra = formatExtra(task.Extras);
+                return (
+                  <FlatCard key={`${task.id}-${i}`} bg={bg2} accent={acc} onClick={() => setDetalle(task)}>
+                    <div style={{ position: 'relative' }}>
+                      <FlatImg src={`${task.Ruta}/${img}`} alt={task.Nombre} loading="lazy" />
+                      <CardActions className="card-actions">
+                        <ActionBtn accent={acc} onClick={e => { e.stopPropagation(); setEditar(task); }}>
+                          ✏️ Editar
+                        </ActionBtn>
+                        <ActionBtn danger onClick={e => { e.stopPropagation(); setConfirmarImagen({ task, posicion: i + 1 }); }}>
+                          🗑️ Eliminar
+                        </ActionBtn>
+                      </CardActions>
+                    </div>
+                    <FlatInfo>
+                      <FlatNombre color={txt}>{task.Nombre}</FlatNombre>
+                      {task.Descripcion && (
+                        <FlatRow color={txt}><span style={{ opacity: 0.6 }}>Descripción :</span>&nbsp;{task.Descripcion}</FlatRow>
+                      )}
+                      {task.Precio !== null && task.Precio !== undefined && (
+                        <FlatRow color={txt}><span style={{ opacity: 0.6 }}>Precio :</span>&nbsp;<b>{precio}</b></FlatRow>
+                      )}
+                      {extra && (
+                        <FlatRow color={txt}><span style={{ opacity: 0.6 }}>Extras :</span>&nbsp;{extra}</FlatRow>
+                      )}
+                      <FlatRow color={txt}><span style={{ opacity: 0.6 }}>Acepta cambio :</span>&nbsp;<b style={{ color: task.AceptaCambio ? acc : 'inherit' }}>{task.AceptaCambio ? 'SI' : 'NO'}</b></FlatRow>
+                      <FlatRow color={txt}><span style={{ opacity: 0.6 }}>Negociable :</span>&nbsp;<b style={{ color: task.Negociable ? acc : 'inherit' }}>{task.Negociable ? 'SI' : 'NO'}</b></FlatRow>
+                    </FlatInfo>
+                  </FlatCard>
+                );
+              })
           )}
         </FlatGrid>
       ) : (

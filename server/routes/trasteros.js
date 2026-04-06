@@ -36,14 +36,28 @@ function formatearTrastero(row) {
   const sepIdx = img1.lastIndexOf('/');
 
   return {
-    id:      row.id,
-    Nombre:  row.nombre,
+    id:           row.id,
+    Nombre:       row.nombre,
+    Categoria:    row.categoria    || '',
+    Subcategoria: row.subcategoria || '',
+    Descripcion:  row.descripcion  || '',
+    Precio:       row.precio       !== null && row.precio !== undefined ? parseFloat(row.precio) : null,
+    Negociable:   row.negociable   || false,
+    AceptaCambio: row.acepta_cambio || false,
+    Extras:       row.extras       || {},
     Ruta:    sepIdx >= 0 ? img1.substring(0, sepIdx) : '',
     Imagen1: img1.substring(sepIdx + 1),
     Imagen2: getImg(2).split('/').pop(),
     Imagen3: getImg(3).split('/').pop(),
     Imagen4: getImg(4).split('/').pop(),
   };
+}
+
+const EXTRAS_KEYS = ['km', 'anio', 'combustible', 'cv', 'metros', 'habitaciones', 'banos'];
+function parseExtras(body) {
+  const extras = {};
+  EXTRAS_KEYS.forEach(k => { if (body[k] !== undefined && body[k] !== '') extras[k] = body[k]; });
+  return extras;
 }
 
 // ── GET /api/trasteros?q=termino&usuario_id=X ─────────────────
@@ -67,7 +81,8 @@ router.get('/', async (req, res) => {
 
     const result = await pool.query(`
       SELECT
-        t.id, t.nombre,
+        t.id, t.nombre, t.categoria, t.subcategoria, t.descripcion,
+        t.precio, t.negociable, t.acepta_cambio, t.extras,
         json_agg(
           json_build_object('posicion', i.posicion, 'ruta', i.ruta)
           ORDER BY i.posicion
@@ -93,7 +108,8 @@ router.get('/:nombre', async (req, res) => {
 
     const result = await pool.query(
       `SELECT
-        t.id, t.nombre,
+        t.id, t.nombre, t.categoria, t.subcategoria, t.descripcion,
+        t.precio, t.negociable, t.acepta_cambio, t.extras,
         json_agg(
           json_build_object('posicion', i.posicion, 'ruta', i.ruta)
           ORDER BY i.posicion
@@ -117,8 +133,13 @@ router.get('/:nombre', async (req, res) => {
 });
 
 // ── POST /api/trasteros ───────────────────────────────────────
-router.post('/', authMiddleware, upload.array('imagenes', 4), async (req, res) => {
-  const { nombre } = req.body;
+router.post('/', authMiddleware, (req, res, next) => {
+  upload.array('imagenes', 4)(req, res, (err) => {
+    if (err) return res.status(400).json({ error: err.message });
+    next();
+  });
+}, async (req, res) => {
+  const { nombre, categoria, subcategoria, descripcion, precio, negociable, acepta_cambio } = req.body;
 
   if (!nombre || !nombre.trim()) {
     return res.status(400).json({ error: 'El nombre del artículo es obligatorio' });
@@ -127,12 +148,20 @@ router.post('/', authMiddleware, upload.array('imagenes', 4), async (req, res) =
     return res.status(400).json({ error: 'Sube al menos una imagen' });
   }
 
-  const API_URL = process.env.API_URL || 'http://localhost:5000';
+  const API_URL    = process.env.API_URL || 'http://localhost:5000';
+  const extrasObj  = parseExtras(req.body);
+  const precioVal  = precio && precio !== '' ? parseFloat(precio) : null;
+  const negVal     = negociable    === 'true';
+  const cambioVal  = acepta_cambio === 'true';
 
   try {
     const trasteroRes = await pool.query(
-      'INSERT INTO trasteros (nombre, usuario_id) VALUES ($1, $2) RETURNING id',
-      [nombre.trim(), req.usuario.id]
+      `INSERT INTO trasteros
+         (nombre, usuario_id, categoria, subcategoria, descripcion, precio, negociable, acepta_cambio, extras)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
+      [nombre.trim(), req.usuario.id,
+       categoria || null, subcategoria || null, descripcion || null,
+       precioVal, negVal, cambioVal, JSON.stringify(extrasObj)]
     );
     const trasteroId = trasteroRes.rows[0].id;
 
@@ -146,7 +175,8 @@ router.post('/', authMiddleware, upload.array('imagenes', 4), async (req, res) =
     }
 
     const creado = await pool.query(`
-      SELECT t.id, t.nombre,
+      SELECT t.id, t.nombre, t.categoria, t.subcategoria, t.descripcion,
+             t.precio, t.negociable, t.acepta_cambio, t.extras,
         json_agg(json_build_object('posicion', i.posicion, 'ruta', i.ruta) ORDER BY i.posicion) AS imagenes
       FROM trasteros t
       LEFT JOIN imagenes i ON i.trastero_id = t.id
@@ -162,14 +192,24 @@ router.post('/', authMiddleware, upload.array('imagenes', 4), async (req, res) =
 });
 
 // ── PUT /api/trasteros/:id ────────────────────────────────────
-router.put('/:id', authMiddleware, upload.array('imagenes', 4), async (req, res) => {
+router.put('/:id', authMiddleware, (req, res, next) => {
+  upload.array('imagenes', 4)(req, res, (err) => {
+    if (err) return res.status(400).json({ error: err.message });
+    next();
+  });
+}, async (req, res) => {
   const id = parseInt(req.params.id);
   if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
 
-  const { nombre } = req.body;
+  const { nombre, categoria, subcategoria, descripcion, precio, negociable, acepta_cambio } = req.body;
   if (!nombre || !nombre.trim()) {
     return res.status(400).json({ error: 'El nombre del artículo es obligatorio' });
   }
+
+  const extrasObj = parseExtras(req.body);
+  const precioVal = precio && precio !== '' ? parseFloat(precio) : null;
+  const negVal    = negociable    === 'true' || negociable    === true;
+  const cambioVal = acepta_cambio === 'true' || acepta_cambio === true;
 
   try {
     const trastero = await pool.query(
@@ -181,7 +221,14 @@ router.put('/:id', authMiddleware, upload.array('imagenes', 4), async (req, res)
       return res.status(403).json({ error: 'Sin permiso para editar este artículo' });
     }
 
-    await pool.query('UPDATE trasteros SET nombre = $1 WHERE id = $2', [nombre.trim(), id]);
+    await pool.query(
+      `UPDATE trasteros
+       SET nombre=$1, categoria=$2, subcategoria=$3, descripcion=$4,
+           precio=$5, negociable=$6, acepta_cambio=$7, extras=$8
+       WHERE id=$9`,
+      [nombre.trim(), categoria || null, subcategoria || null, descripcion || null,
+       precioVal, negVal, cambioVal, JSON.stringify(extrasObj), id]
+    );
 
     if (req.files && req.files.length > 0) {
       const API_URL = process.env.API_URL || 'http://localhost:5000';
@@ -209,7 +256,8 @@ router.put('/:id', authMiddleware, upload.array('imagenes', 4), async (req, res)
     }
 
     const actualizado = await pool.query(`
-      SELECT t.id, t.nombre,
+      SELECT t.id, t.nombre, t.categoria, t.subcategoria, t.descripcion,
+             t.precio, t.negociable, t.acepta_cambio, t.extras,
         json_agg(json_build_object('posicion', i.posicion, 'ruta', i.ruta) ORDER BY i.posicion) AS imagenes
       FROM trasteros t
       LEFT JOIN imagenes i ON i.trastero_id = t.id

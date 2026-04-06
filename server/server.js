@@ -22,6 +22,12 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Error handler global — devuelve siempre JSON
+app.use((err, req, res, next) => {
+  console.error('Error no controlado:', err);
+  res.status(err.status || 500).json({ error: err.message || 'Error del servidor' });
+});
+
 app.listen(PORT, () => {
   console.log(`Servidor Trastero corriendo en http://localhost:${PORT}`);
 });
