@@ -161,6 +161,129 @@ router.post('/', authMiddleware, upload.array('imagenes', 4), async (req, res) =
   }
 });
 
+// ── PUT /api/trasteros/:id ────────────────────────────────────
+router.put('/:id', authMiddleware, upload.array('imagenes', 4), async (req, res) => {
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
+
+  const { nombre } = req.body;
+  if (!nombre || !nombre.trim()) {
+    return res.status(400).json({ error: 'El nombre del artículo es obligatorio' });
+  }
+
+  try {
+    const trastero = await pool.query(
+      'SELECT id, usuario_id FROM trasteros WHERE id = $1',
+      [id]
+    );
+    if (trastero.rows.length === 0) return res.status(404).json({ error: 'Artículo no encontrado' });
+    if (trastero.rows[0].usuario_id !== req.usuario.id) {
+      return res.status(403).json({ error: 'Sin permiso para editar este artículo' });
+    }
+
+    await pool.query('UPDATE trasteros SET nombre = $1 WHERE id = $2', [nombre.trim(), id]);
+
+    if (req.files && req.files.length > 0) {
+      const API_URL = process.env.API_URL || 'http://localhost:5000';
+
+      // Borrar imágenes antiguas del disco
+      const imgRows = await pool.query('SELECT ruta FROM imagenes WHERE trastero_id = $1', [id]);
+      for (const img of imgRows.rows) {
+        try {
+          const url      = new URL(img.ruta);
+          const filePath = path.join(__dirname, '../public', url.pathname);
+          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        } catch {}
+      }
+
+      await pool.query('DELETE FROM imagenes WHERE trastero_id = $1', [id]);
+
+      for (let i = 0; i < req.files.length; i++) {
+        const file = req.files[i];
+        const ruta = `${API_URL}/uploads/${req.usuario.id}/${file.filename}`;
+        await pool.query(
+          'INSERT INTO imagenes (trastero_id, posicion, ruta) VALUES ($1, $2, $3)',
+          [id, i + 1, ruta]
+        );
+      }
+    }
+
+    const actualizado = await pool.query(`
+      SELECT t.id, t.nombre,
+        json_agg(json_build_object('posicion', i.posicion, 'ruta', i.ruta) ORDER BY i.posicion) AS imagenes
+      FROM trasteros t
+      LEFT JOIN imagenes i ON i.trastero_id = t.id
+      WHERE t.id = $1
+      GROUP BY t.id
+    `, [id]);
+
+    res.json(formatearTrastero(actualizado.rows[0]));
+  } catch (err) {
+    console.error('Error en PUT /api/trasteros/:id:', err);
+    res.status(500).json({ error: 'Error al actualizar el artículo' });
+  }
+});
+
+// ── DELETE /api/trasteros/:id/imagenes/:posicion ──────────────
+router.delete('/:id/imagenes/:posicion', authMiddleware, async (req, res) => {
+  const id  = parseInt(req.params.id);
+  const pos = parseInt(req.params.posicion);
+  if (isNaN(id) || isNaN(pos) || pos < 1 || pos > 4) {
+    return res.status(400).json({ error: 'Parámetros inválidos' });
+  }
+
+  try {
+    const trastero = await pool.query(
+      'SELECT id, usuario_id FROM trasteros WHERE id = $1', [id]
+    );
+    if (trastero.rows.length === 0) return res.status(404).json({ error: 'Artículo no encontrado' });
+    if (trastero.rows[0].usuario_id !== req.usuario.id) {
+      return res.status(403).json({ error: 'Sin permiso' });
+    }
+
+    // Borrar fichero del disco
+    const imgRow = await pool.query(
+      'SELECT ruta FROM imagenes WHERE trastero_id = $1 AND posicion = $2', [id, pos]
+    );
+    if (imgRow.rows.length === 0) return res.status(404).json({ error: 'Imagen no encontrada' });
+    try {
+      const url      = new URL(imgRow.rows[0].ruta);
+      const filePath = path.join(__dirname, '../public', url.pathname);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    } catch {}
+
+    // Borrar la imagen y re-secuenciar las restantes
+    await pool.query('DELETE FROM imagenes WHERE trastero_id = $1 AND posicion = $2', [id, pos]);
+    await pool.query(
+      'UPDATE imagenes SET posicion = posicion - 1 WHERE trastero_id = $1 AND posicion > $2',
+      [id, pos]
+    );
+
+    // ¿Quedan imágenes?
+    const remaining = await pool.query(
+      'SELECT COUNT(*) FROM imagenes WHERE trastero_id = $1', [id]
+    );
+    if (parseInt(remaining.rows[0].count) === 0) {
+      await pool.query('DELETE FROM trasteros WHERE id = $1', [id]);
+      return res.json({ deleted: true, id });
+    }
+
+    const actualizado = await pool.query(`
+      SELECT t.id, t.nombre,
+        json_agg(json_build_object('posicion', i.posicion, 'ruta', i.ruta) ORDER BY i.posicion) AS imagenes
+      FROM trasteros t
+      LEFT JOIN imagenes i ON i.trastero_id = t.id
+      WHERE t.id = $1
+      GROUP BY t.id
+    `, [id]);
+
+    res.json(formatearTrastero(actualizado.rows[0]));
+  } catch (err) {
+    console.error('Error en DELETE imagen:', err);
+    res.status(500).json({ error: 'Error al eliminar la imagen' });
+  }
+});
+
 // ── DELETE /api/trasteros/:id ─────────────────────────────────
 router.delete('/:id', authMiddleware, async (req, res) => {
   const id = parseInt(req.params.id);

@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useContext } from 'react';
 import styled from 'styled-components';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ThemeContext } from '../context/ThemeContext';
+import '../components/Formularios/Cargarimg/Cargaimg.css';
+import ModalSubir from '../components/Modal/ModalSubir';
+import ModalEditar from '../components/Modal/ModalEditar';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -90,10 +93,25 @@ const AddBtn = styled.button`
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  &:hover { opacity: 0.85; transform: translateY(-1px); }
+`;
 
+const ToggleBtn = styled.button`
+  background: transparent;
+  color: ${p => p.accent};
+  border: 1px solid ${p => p.accent}88;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   &:hover {
-    opacity: 0.85;
-    transform: translateY(-1px);
+    background: ${p => p.accent}22;
+    border-color: ${p => p.accent};
   }
 `;
 
@@ -106,19 +124,50 @@ const Grid = styled.div`
   gap: 10px;
 `;
 
+const FlatGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 249px);
+  justify-content: center;
+  gap: 10px;
+`;
+
+const FlatCard = styled.div`
+  position: relative;
+  width: 249px;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  &:hover .card-actions { opacity: 1; }
+`;
+
+const FlatImg = styled.img`
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  display: block;
+`;
+
+const FlatLabel = styled.div`
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
 /* ─── Tarjeta ─────────────────────────────────────────────── */
 
 const CardWrapper = styled.div`
   position: relative;
   width: 249px;
-
-  &:hover .card-actions {
-    opacity: 1;
-  }
+  cursor: pointer;
+  &:hover .card-actions { opacity: 1; }
 `;
 
 const CardActions = styled.div`
-  className: card-actions;
   position: absolute;
   top: 58px;
   left: 0;
@@ -145,10 +194,7 @@ const ActionBtn = styled.button`
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-
-  &:hover {
-    opacity: 0.85;
-  }
+  &:hover { opacity: 0.85; }
 `;
 
 /* ─── Estado vacío ───────────────────────────────────────── */
@@ -163,9 +209,7 @@ const EmptyState = styled.div`
   text-align: center;
 `;
 
-const EmptyIcon = styled.div`
-  font-size: 64px;
-`;
+const EmptyIcon = styled.div` font-size: 64px; `;
 
 const EmptyTitle = styled.h2`
   color: ${p => getContrastColor(p.bg)};
@@ -191,17 +235,20 @@ const ProtectedScreen = styled.div`
   text-align: center;
 `;
 
-/* ─── Modal de confirmación ──────────────────────────────── */
+/* ─── Overlay genérico ───────────────────────────────────── */
 
 const Overlay = styled.div`
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.75);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: 20px;
 `;
+
+/* ─── Modal confirmación eliminar ────────────────────────── */
 
 const ConfirmBox = styled.div`
   background: ${p => p.bg};
@@ -226,38 +273,114 @@ const ConfirmActions = styled.div`
   justify-content: center;
 `;
 
-/* ─── Tarjeta reutilizando estilos de Cargaimg ───────────── */
+/* ─── Modal detalle ──────────────────────────────────────── */
 
-function TrasteroCard({ task, onDelete, theme }) {
+const DetailBox = styled.div`
+  background: ${p => p.bg};
+  border: 1px solid #444;
+  border-radius: 14px;
+  padding: 32px;
+  max-width: 700px;
+  width: 95%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+`;
+
+const DetailClose = styled.button`
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(255,255,255,0.1);
+  border: none;
+  color: #fff;
+  font-size: 20px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  &:hover { background: rgba(255,255,255,0.2); }
+`;
+
+const DetailTitle = styled.h2`
+  color: ${p => p.color};
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+  padding-right: 40px;
+`;
+
+const IMG_BASE = { objectFit: 'cover', border: '2px solid rgb(247 247 251)' };
+const GRID2 = { display: 'grid', gridTemplateColumns: '1fr 1fr', borderRadius: 8, overflow: 'hidden' };
+
+function DetailGrid({ ruta, imgs }) {
+  const srcs = imgs.filter(Boolean).map(n => `${ruta}/${n}`);
+  const n = srcs.length;
+  if (n === 0) return null;
+  if (n === 1) return (
+    <img src={srcs[0]} alt="" style={{ ...IMG_BASE, width: '100%', height: 320, borderRadius: 8 }} />
+  );
+  if (n === 2) return (
+    <div style={GRID2}>
+      <img src={srcs[0]} alt="" style={{ ...IMG_BASE, width: '100%', height: 240 }} />
+      <img src={srcs[1]} alt="" style={{ ...IMG_BASE, width: '100%', height: 240 }} />
+    </div>
+  );
+  if (n === 3) return (
+    <div style={GRID2}>
+      <img src={srcs[0]} alt="" style={{ ...IMG_BASE, width: '100%', height: 160 }} />
+      <img src={srcs[1]} alt="" style={{ ...IMG_BASE, width: '100%', height: 160 }} />
+      <img src={srcs[2]} alt="" style={{ ...IMG_BASE, gridColumn: '1/3', width: '100%', height: 160 }} />
+    </div>
+  );
   return (
-    <CardWrapper>
-      <Link to={`/De/${task.Nombre}`} style={{ textDecoration: 'none' }}>
-        <article className="location-listing">
-          <div className="backgroundTitle">
-            <p className="titulo-tras">
-              <img
-                className="img-titulo-tras"
-                src={`${task.Ruta}/${task.Imagen1}`}
-                alt={task.Nombre}
-                loading="lazy"
-              />
-              {task.Nombre}
-            </p>
-          </div>
-          <div className="grid">
-            <img className="item img-gif-top-left"    src={`${task.Ruta}/${task.Imagen1}`} alt={task.Nombre} loading="lazy" />
-            <img className="item img-gif-top-right"   src={`${task.Ruta}/${task.Imagen2}`} alt={task.Nombre} loading="lazy" />
-            <img className="item img-gif-left-bottom" src={`${task.Ruta}/${task.Imagen3}`} alt={task.Nombre} loading="lazy" />
-            <img className="item img-gif-right-bottom" src={`${task.Ruta}/${task.Imagen4}`} alt={task.Nombre} loading="lazy" />
-          </div>
-        </article>
-      </Link>
+    <div style={GRID2}>
+      <img src={srcs[0]} alt="" style={{ ...IMG_BASE, width: '100%', height: 160 }} />
+      <img src={srcs[1]} alt="" style={{ ...IMG_BASE, width: '100%', height: 160 }} />
+      <img src={srcs[2]} alt="" style={{ ...IMG_BASE, width: '100%', height: 160 }} />
+      <img src={srcs[3]} alt="" style={{ ...IMG_BASE, width: '100%', height: 160 }} />
+    </div>
+  );
+}
+
+const DetailActions = styled.div`
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+`;
+
+/* ─── Tarjeta ─────────────────────────────────────────────── */
+
+function TrasteroCard({ task, onDelete, onOpen, onEdit, theme }) {
+  const imgs = [task.Imagen1, task.Imagen2, task.Imagen3, task.Imagen4].filter(Boolean);
+  return (
+    <CardWrapper onClick={() => onOpen(task)}>
+      <article className="location-listing">
+        <div className="backgroundTitle">
+          <p className="titulo-tras">
+            <img className="img-titulo-tras" src={`${task.Ruta}/${task.Imagen1}`} alt={task.Nombre} loading="lazy" />
+            {task.Nombre}
+          </p>
+        </div>
+        <div className="grid">
+          {imgs[0] && <img className="item img-gif-top-left"     src={`${task.Ruta}/${imgs[0]}`} alt="" loading="lazy" />}
+          {imgs[1] && <img className="item img-gif-top-right"    src={`${task.Ruta}/${imgs[1]}`} alt="" loading="lazy" />}
+          {imgs[2] && <img className="item img-gif-left-bottom"  src={`${task.Ruta}/${imgs[2]}`} alt="" loading="lazy" />}
+          {imgs[3] && <img className="item img-gif-right-bottom" src={`${task.Ruta}/${imgs[3]}`} alt="" loading="lazy" />}
+        </div>
+      </article>
 
       <CardActions className="card-actions">
-        <ActionBtn accent={theme.accent} onClick={(e) => { e.preventDefault(); }}>
+        <ActionBtn accent={theme.accent} onClick={e => { e.stopPropagation(); onEdit(task); }}>
           ✏️ Editar
         </ActionBtn>
-        <ActionBtn danger onClick={(e) => { e.preventDefault(); onDelete(task); }}>
+        <ActionBtn danger onClick={e => { e.stopPropagation(); onDelete(task); }}>
           🗑️ Eliminar
         </ActionBtn>
       </CardActions>
@@ -270,12 +393,17 @@ function TrasteroCard({ task, onDelete, theme }) {
 function MiTrastero({ user }) {
   const navigate = useNavigate();
   const { theme } = useContext(ThemeContext);
-  const bg = theme.modalBg;
+  const bg  = theme.modalBg;
   const acc = theme.accent;
 
-  const [trasteros, setTrasteros] = useState([]);
-  const [cargando, setCargando] = useState(true);
-  const [confirmar, setConfirmar] = useState(null); // trastero a eliminar
+  const [trasteros,  setTrasteros]  = useState([]);
+  const [cargando,   setCargando]   = useState(true);
+  const [confirmar,  setConfirmar]  = useState(null);
+  const [detalle,    setDetalle]    = useState(null);
+  const [showSubir,  setShowSubir]  = useState(false);
+  const [vistaPlana,      setVistaPlana]      = useState(false);
+  const [editar,          setEditar]          = useState(null);
+  const [confirmarImagen, setConfirmarImagen] = useState(null); // { task, posicion }
 
   useEffect(() => {
     if (!user) return;
@@ -287,21 +415,16 @@ function MiTrastero({ user }) {
       .finally(() => setCargando(false));
   }, [user]);
 
-  /* ── Sin sesión ── */
   if (!user) {
     return (
       <PageWrapper>
         <ProtectedScreen>
           <div style={{ fontSize: 56 }}>🔒</div>
-          <h2 style={{ color: getContrastColor(theme.background), margin: 0 }}>
-            Acceso restringido
-          </h2>
+          <h2 style={{ color: getContrastColor(theme.background), margin: 0 }}>Acceso restringido</h2>
           <p style={{ color: getContrastColor(theme.background) + '88', margin: 0 }}>
             Inicia sesión para ver tu trastero
           </p>
-          <AddBtn accent={acc} onClick={() => navigate('/')}>
-            Ir al inicio
-          </AddBtn>
+          <AddBtn accent={acc} onClick={() => navigate('/')}>Ir al inicio</AddBtn>
         </ProtectedScreen>
       </PageWrapper>
     );
@@ -309,6 +432,7 @@ function MiTrastero({ user }) {
 
   const handleEliminar = async (trastero) => {
     setConfirmar(null);
+    setDetalle(null);
     try {
       await fetch(`${API_URL}/api/trasteros/${trastero.id}`, {
         method: 'DELETE',
@@ -318,8 +442,63 @@ function MiTrastero({ user }) {
     setTrasteros(prev => prev.filter(t => t.id !== trastero.id));
   };
 
+  const handleEliminarImagen = async ({ task, posicion }) => {
+    setConfirmarImagen(null);
+    try {
+      const res = await fetch(`${API_URL}/api/trasteros/${task.id}/imagenes/${posicion}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${localStorage.getItem('trastero_token')}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.deleted) {
+        setTrasteros(prev => prev.filter(t => t.id !== task.id));
+      } else {
+        setTrasteros(prev => prev.map(t => t.id === data.id ? data : t));
+      }
+    } catch {}
+  };
+
   return (
     <PageWrapper>
+
+      {/* ── Modal subir artículo ── */}
+      <ModalSubir
+        isOpen={showSubir}
+        onClose={() => setShowSubir(false)}
+        onPublicado={nuevo => setTrasteros(prev => [...prev, nuevo])}
+      />
+
+      {/* ── Modal editar artículo ── */}
+      <ModalEditar
+        isOpen={!!editar}
+        trastero={editar}
+        onClose={() => setEditar(null)}
+        onGuardado={actualizado => {
+          setTrasteros(prev => prev.map(t => t.id === actualizado.id ? actualizado : t));
+          setEditar(null);
+        }}
+      />
+
+      {/* ── Modal detalle ── */}
+      {detalle && (
+        <Overlay onClick={() => setDetalle(null)}>
+          <DetailBox bg={bg} onClick={e => e.stopPropagation()}>
+            <DetailClose onClick={() => setDetalle(null)}>✕</DetailClose>
+            <DetailTitle color={getContrastColor(bg)}>{detalle.Nombre}</DetailTitle>
+            <DetailGrid
+              ruta={detalle.Ruta}
+              imgs={[detalle.Imagen1, detalle.Imagen2, detalle.Imagen3, detalle.Imagen4]}
+            />
+            <DetailActions>
+              <ActionBtn accent={acc} onClick={() => { setDetalle(null); setEditar(detalle); }}>✏️ Editar</ActionBtn>
+              <ActionBtn danger onClick={() => { setDetalle(null); setConfirmar(detalle); }}>
+                🗑️ Eliminar
+              </ActionBtn>
+            </DetailActions>
+          </DetailBox>
+        </Overlay>
+      )}
 
       {/* ── Confirmar eliminación ── */}
       {confirmar && (
@@ -332,12 +511,29 @@ function MiTrastero({ user }) {
               </span>
             </ConfirmTitle>
             <ConfirmActions>
-              <ActionBtn danger onClick={() => handleEliminar(confirmar)}>
-                Sí, eliminar
-              </ActionBtn>
-              <ActionBtn accent={acc} onClick={() => setConfirmar(null)}>
-                Cancelar
-              </ActionBtn>
+              <ActionBtn danger onClick={() => handleEliminar(confirmar)}>Sí, eliminar</ActionBtn>
+              <ActionBtn accent={acc} onClick={() => setConfirmar(null)}>Cancelar</ActionBtn>
+            </ConfirmActions>
+          </ConfirmBox>
+        </Overlay>
+      )}
+
+      {/* ── Confirmar eliminar imagen suelta ── */}
+      {confirmarImagen && (
+        <Overlay onClick={() => setConfirmarImagen(null)}>
+          <ConfirmBox bg={bg} onClick={e => e.stopPropagation()}>
+            <ConfirmTitle bg={bg}>
+              ¿Eliminar esta imagen de "{confirmarImagen.task.Nombre}"?<br />
+              <span style={{ fontWeight: 400, fontSize: 14, opacity: 0.7 }}>
+                {[confirmarImagen.task.Imagen1, confirmarImagen.task.Imagen2,
+                  confirmarImagen.task.Imagen3, confirmarImagen.task.Imagen4].filter(Boolean).length === 1
+                  ? 'Es la única imagen — se eliminará el artículo completo.'
+                  : 'Solo se borrará esta imagen.'}
+              </span>
+            </ConfirmTitle>
+            <ConfirmActions>
+              <ActionBtn danger onClick={() => handleEliminarImagen(confirmarImagen)}>Sí, eliminar</ActionBtn>
+              <ActionBtn accent={acc} onClick={() => setConfirmarImagen(null)}>Cancelar</ActionBtn>
             </ConfirmActions>
           </ConfirmBox>
         </Overlay>
@@ -358,9 +554,35 @@ function MiTrastero({ user }) {
               📦 {trasteros.length} {trasteros.length === 1 ? 'artículo' : 'artículos'}
             </CountBadge>
           )}
-          <AddBtn accent={acc} onClick={() => navigate('/subir')}>
-            + Añadir
-          </AddBtn>
+          {trasteros.length > 0 && (
+            <ToggleBtn
+              accent={acc}
+              title={vistaPlana ? 'Ver en grupo' : 'Ver todas las imágenes'}
+              onClick={() => setVistaPlana(v => !v)}
+            >
+              {vistaPlana ? (
+                <>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <rect x="1" y="1" width="6" height="6" rx="1"/>
+                    <rect x="9" y="1" width="6" height="6" rx="1"/>
+                    <rect x="1" y="9" width="6" height="6" rx="1"/>
+                    <rect x="9" y="9" width="6" height="6" rx="1"/>
+                  </svg>
+                  Grupo
+                </>
+              ) : (
+                <>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <rect x="1" y="2" width="14" height="2" rx="1"/>
+                    <rect x="1" y="7" width="14" height="2" rx="1"/>
+                    <rect x="1" y="12" width="14" height="2" rx="1"/>
+                  </svg>
+                  Todas
+                </>
+              )}
+            </ToggleBtn>
+          )}
+          <AddBtn accent={acc} onClick={() => setShowSubir(true)}>+ Añadir</AddBtn>
         </HeaderRight>
       </HeaderCard>
 
@@ -374,13 +596,30 @@ function MiTrastero({ user }) {
         <EmptyState>
           <EmptyIcon>📦</EmptyIcon>
           <EmptyTitle bg={theme.background}>Aún no tienes artículos</EmptyTitle>
-          <EmptySub bg={theme.background}>
-            Publica tu primer trastero y empieza a vender
-          </EmptySub>
-          <AddBtn accent={acc} onClick={() => navigate('/subir')}>
-            + Publicar mi primer trastero
-          </AddBtn>
+          <EmptySub bg={theme.background}>Publica tu primer trastero y empieza a vender</EmptySub>
+          <AddBtn accent={acc} onClick={() => setShowSubir(true)}>+ Publicar mi primer trastero</AddBtn>
         </EmptyState>
+      ) : vistaPlana ? (
+        <FlatGrid>
+          {trasteros.flatMap(task =>
+            [task.Imagen1, task.Imagen2, task.Imagen3, task.Imagen4]
+              .filter(Boolean)
+              .map((img, i) => (
+                <FlatCard key={`${task.id}-${i}`} onClick={() => setDetalle(task)}>
+                  <FlatImg src={`${task.Ruta}/${img}`} alt={task.Nombre} loading="lazy" />
+                  <FlatLabel>{task.Nombre}</FlatLabel>
+                  <CardActions className="card-actions">
+                    <ActionBtn accent={acc} onClick={e => { e.stopPropagation(); setEditar(task); }}>
+                      ✏️ Editar
+                    </ActionBtn>
+                    <ActionBtn danger onClick={e => { e.stopPropagation(); setConfirmarImagen({ task, posicion: i + 1 }); }}>
+                      🗑️ Eliminar
+                    </ActionBtn>
+                  </CardActions>
+                </FlatCard>
+              ))
+          )}
+        </FlatGrid>
       ) : (
         <Grid>
           {trasteros.map(task => (
@@ -388,7 +627,9 @@ function MiTrastero({ user }) {
               key={task.id || task.Nombre}
               task={task}
               theme={theme}
-              onDelete={(t) => setConfirmar(t)}
+              onDelete={t => setConfirmar(t)}
+              onOpen={t => setDetalle(t)}
+              onEdit={t => setEditar(t)}
             />
           ))}
         </Grid>

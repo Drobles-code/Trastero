@@ -13,7 +13,6 @@ import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import NotFound from './pages/NotFound';
 import MiTrastero from './pages/MiTrastero';
-import SubirTrastero from './pages/SubirTrastero';
 import OpsLogin from './pages/OpsLogin';
 import OpsDashboard from './pages/OpsDashboard';
 
@@ -36,7 +35,29 @@ const ContentWrapper = styled.div`
 `;
 
 function AppContent() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      // Restaurar sesión desde localStorage al recargar
+      const stored = localStorage.getItem('user');
+      if (!stored) return null;
+
+      // Verificar que el token JWT no ha expirado (decodificación sin librería)
+      const token = localStorage.getItem('trastero_token');
+      if (token) {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.exp && Date.now() / 1000 > payload.exp) {
+          // Token expirado — limpiar sesión
+          localStorage.removeItem('user');
+          localStorage.removeItem('trastero_token');
+          return null;
+        }
+      }
+
+      return JSON.parse(stored);
+    } catch {
+      return null;
+    }
+  });
   const { theme } = useContext(ThemeContext);
 
   const handleLogin = (userData) => {
@@ -47,6 +68,7 @@ function AppContent() {
   const handleLogout = () => {
     setUser(null);
     localStorage.removeItem('user');
+    localStorage.removeItem('trastero_token');
   };
 
   return (
@@ -63,7 +85,6 @@ function AppContent() {
             <Route path="/contact" element={<Contact />} />
             <Route path="/profile" element={<Profile user={user} onLogout={handleLogout} />} />
             <Route path="/mi-trastero" element={<MiTrastero user={user} />} />
-            <Route path="/subir"      element={<SubirTrastero user={user} />} />
             <Route path="/settings" element={<Settings />} />
             {/* Rutas de sistema — sin enlace en navbar */}
             <Route path="/ops/login"     element={<OpsLogin />} />
