@@ -279,9 +279,9 @@ function Navbar({ user, onLogout, onLogin }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             {user && (
               <UserChip
-                onClick={() => navigate('/profile')}
+                onClick={() => navigate('/mi-trastero')}
                 style={{ cursor: 'pointer' }}
-                title="Ver perfil"
+                title="Mi Trastero"
               >
                 <ChipAvatar src={user.avatar} alt={user.name} />
                 {user.name}
@@ -325,10 +325,13 @@ function Navbar({ user, onLogout, onLogin }) {
                   alt={user.name}
                   title={user.name}
                   onClick={() => {
-                    navigate('/profile');
+                    navigate('/mi-trastero');
                     closeMobileMenu();
                   }}
                 />
+                <NavLink to="/mi-trastero" onClick={closeMobileMenu}>
+                  📦 Mi Trastero
+                </NavLink>
                 <NavLink to="/profile" onClick={closeMobileMenu}>
                   👤 Mi Perfil
                 </NavLink>

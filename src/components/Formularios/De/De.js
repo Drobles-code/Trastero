@@ -31,8 +31,9 @@ const BodyUser = styled.div`
   width: 100%;
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(245px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(245px, 245px));
   gap: 20px;
+  justify-content: center;
   align-content: start;
 
   @media (max-width: 768px) {

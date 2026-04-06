@@ -1,14 +1,14 @@
 # 📦 Trastero — Estado del Proyecto
 
 > 📌 **Este archivo está en git** — sin credenciales. Las contraseñas van solo en `server/.env` (no subir).
-> Última actualización: 2026-04-02
+> Última actualización: 2026-04-06
 
 ---
 
 ## 🗂️ ¿Qué es este proyecto?
 
 Aplicación web para gestión y visualización de trasteros/almacenes.
-Los usuarios pueden ver la galería pública sin sesión. Con sesión pueden gestionar su perfil y (próximamente) sus propios trasteros.
+Los usuarios pueden ver la galería pública sin sesión. Con sesión pueden gestionar su perfil y sus propios artículos (subir, ver, eliminar).
 
 ---
 
@@ -34,8 +34,7 @@ cd server
 npm install
 
 # 4. Crear el archivo de credenciales del servidor
-# (copiar el contenido de la sección "Credenciales" más abajo)
-# Crear: server/.env
+# Crear: server/.env  (ver sección Credenciales)
 
 # 5. Crear la base de datos en PostgreSQL
 # Abrir pgAdmin o psql y ejecutar:
@@ -44,7 +43,7 @@ npm install
 
 # 6. Arrancar el backend (Terminal 1)
 cd server
-npm run dev        # → http://localhost:5000
+node server.js     # → http://localhost:5000
 
 # 7. Arrancar el frontend (Terminal 2)
 cd ..
@@ -68,6 +67,7 @@ DB_NAME=trastero
 DB_USER=postgres
 DB_PASSWORD=<contraseña local — no en git>
 JWT_SECRET=<secreto local — no en git>
+API_URL=http://localhost:5000
 PORT=5000
 ```
 
@@ -115,8 +115,8 @@ REACT_APP_API_URL=http://localhost:5000
 |-------|------|-------|
 | id | SERIAL PK | |
 | trastero_id | INT FK | → trasteros |
-| ruta | VARCHAR(500) | ruta completa con filename |
-| posicion | INT | 1 a 4 |
+| ruta | VARCHAR(500) | URL completa: {API_URL}/uploads/{userId}/{filename} |
+| posicion | INT | 1=principal, 2-4=adicionales |
 
 #### `categorias`
 | Campo | Tipo |
@@ -149,41 +149,37 @@ Guarda el tema de color por usuario (background, text, accent, modal, navbar, ca
 
 ## 🌐 API — Endpoints
 
-| Método | Ruta | Body | Respuesta |
-|--------|------|------|-----------|
-| GET | `/api/health` | — | `{ status, timestamp }` |
-| GET | `/api/trasteros` | — | Array de trasteros |
-| GET | `/api/trasteros?q=texto` | — | Filtrado por nombre |
-| GET | `/api/trasteros/:nombre` | — | Trastero individual |
-| POST | `/api/auth/login` | `{ email, password }` | `{ token, usuario }` |
-| POST | `/api/auth/registro` | `{ nombre, email, password }` | `{ token, usuario }` |
-| POST | `/api/ops/login` | `{ email, password }` | `{ token, operator }` — JWT tipo:'operator', expira 8h |
-| GET | `/api/ops/usuarios` | — (requiere token operator) | Lista de todos los usuarios |
-| GET | `/api/ops/stats` | — (requiere token operator) | `{ usuarios: N, trasteros: N }` |
+| Método | Ruta | Auth | Body | Respuesta |
+|--------|------|------|------|-----------|
+| GET | `/api/health` | — | — | `{ status, timestamp }` |
+| GET | `/api/trasteros` | — | — | Array de trasteros |
+| GET | `/api/trasteros?q=texto` | — | — | Filtrado por nombre |
+| GET | `/api/trasteros?usuario_id=X` | — | — | Trasteros de un usuario |
+| GET | `/api/trasteros/:nombre` | — | — | Trastero individual |
+| POST | `/api/trasteros` | JWT Bearer | multipart: `nombre` + `imagenes[]` | Trastero creado |
+| DELETE | `/api/trasteros/:id` | JWT Bearer | — | `{ ok: true }` |
+| POST | `/api/auth/login` | — | `{ email, password }` | `{ token, usuario }` |
+| POST | `/api/auth/registro` | — | `{ nombre, email, password }` | `{ token, usuario }` |
+| POST | `/api/ops/login` | — | `{ email, password }` | `{ token, operator }` |
+| GET | `/api/ops/usuarios` | JWT operator | — | Lista de usuarios |
+| GET | `/api/ops/stats` | JWT operator | — | `{ usuarios: N, trasteros: N }` |
+
+### Subida de imágenes
+- Multer guarda en `server/public/uploads/{usuario_id}/{timestamp}-{random}.ext`
+- Express sirve la carpeta como estática: `GET /uploads/{usuario_id}/{filename}`
+- Límite: 4 imágenes por artículo, 5 MB por imagen
+- Solo tipos `image/*`
 
 ### Formato de respuesta de trastero
 ```json
 {
   "id": 1,
   "Nombre": "flor",
-  "Ruta": "img-gif/Gif-101TNF18",
-  "Imagen1": "29194001.jpg",
-  "Imagen2": "29194002.jpg",
-  "Imagen3": "29194004.jpg",
-  "Imagen4": "29194005.jpg"
-}
-```
-
-### Formato de respuesta de auth
-```json
-{
-  "token": "eyJhbGciOiJIUzI1NiJ9...",
-  "usuario": {
-    "id": 1,
-    "nombre": "Dorian",
-    "email": "dorian@email.com",
-    "avatar_url": "https://api.dicebear.com/..."
-  }
+  "Ruta": "http://localhost:5000/uploads/3",
+  "Imagen1": "1712345678-abc.jpg",
+  "Imagen2": "1712345679-def.jpg",
+  "Imagen3": "",
+  "Imagen4": ""
 }
 ```
 
@@ -207,6 +203,7 @@ Guarda el tema de color por usuario (background, text, accent, modal, navbar, ca
 | bcrypt | 5.1.1 |
 | jsonwebtoken | 9.0.2 |
 | pg (PostgreSQL) | 8.11.3 |
+| multer | 1.4.5 |
 | dotenv | 16.3.1 |
 | nodemon (dev) | 3.0.1 |
 
@@ -216,10 +213,10 @@ Guarda el tema de color por usuario (background, text, accent, modal, navbar, ca
 
 ```
 Trastero/
-├── public/index.html          ← fondo oscuro pre-React (sin destello)
+├── public/index.html              ← fondo oscuro pre-React (sin destello)
 ├── src/
-│   ├── App.js                 ← rutas, estado usuario, handleLogin/Logout
-│   ├── context/ThemeContext.js ← tema global con localStorage
+│   ├── App.js                     ← rutas, estado usuario, handleLogin/Logout
+│   ├── context/ThemeContext.js    ← tema global con localStorage
 │   ├── components/
 │   │   ├── Auth/
 │   │   │   ├── SignInContent.jsx  ← login → POST /api/auth/login
@@ -228,23 +225,28 @@ Trastero/
 │   │   └── Formularios/
 │   │       ├── Header/Navbar.jsx  ← nav, modal auth, chip usuario
 │   │       ├── Principal/Principal.js ← galería principal
-│   │       └── Cargarimg/Cargaimg.js  ← tarjeta de trastero
+│   │       ├── Cargarimg/Cargaimg.js  ← tarjeta con grid adaptativo (1/2/3/4 imgs)
+│   │       └── De/De.js           ← vista detalle con grid centrado
 │   └── pages/
-│       ├── Profile.jsx        ← perfil completo (protegido)
-│       ├── Settings.jsx       ← selector de tema
-│       ├── OpsLogin.jsx       ← login panel operadores (/ops/login)
-│       └── OpsDashboard.jsx   ← dashboard operadores (/ops/dashboard)
+│       ├── MiTrastero.jsx         ← galería personal del usuario (protegida)
+│       ├── SubirTrastero.jsx      ← formulario subida artículo + imágenes
+│       ├── Profile.jsx            ← perfil completo (protegido)
+│       ├── Settings.jsx           ← selector de tema
+│       ├── OpsLogin.jsx           ← login panel operadores (/ops/login)
+│       └── OpsDashboard.jsx       ← dashboard operadores (/ops/dashboard)
 ├── server/
-│   ├── server.js              ← Express app, puerto 5000
-│   ├── db.js                  ← pool PostgreSQL
-│   ├── .env                   ← credenciales (NO en git)
+│   ├── server.js                  ← Express app, puerto 5000, sirve /uploads
+│   ├── db.js                      ← pool PostgreSQL
+│   ├── .env                       ← credenciales (NO en git)
+│   ├── public/uploads/            ← imágenes subidas por usuarios
 │   ├── middleware/
-│   │   └── requireOperator.js ← verifica JWT tipo:'operator'
+│   │   ├── authMiddleware.js      ← verifica JWT Bearer → req.usuario
+│   │   └── requireOperator.js    ← verifica JWT tipo:'operator'
 │   └── routes/
-│       ├── auth.js            ← login + registro usuarios
-│       ├── trasteros.js       ← GET trasteros
-│       └── ops.js             ← panel operadores (login, stats, usuarios)
-└── ESTADO_PROYECTO.md         ← este archivo (NO en git)
+│       ├── auth.js                ← login + registro usuarios
+│       ├── trasteros.js           ← GET/POST/DELETE trasteros + multer
+│       └── ops.js                 ← panel operadores
+└── ESTADO_PROYECTO.md             ← este archivo (en git, sin credenciales)
 ```
 
 ---
@@ -263,15 +265,6 @@ Acceso separado de usuarios normales — tabla `sys_operators`.
 | Rutas protegidas | `GET /api/ops/usuarios`, `GET /api/ops/stats` |
 
 > La URL no aparece en ningún menú ni enlace de la app.
-> El bundle JS sí contiene la ruta — ver nota de seguridad abajo.
-
-### Nota de seguridad — inspección del bundle
-React incluye todas las rutas en el bundle JS del frontend.
-Alguien con conocimientos técnicos podría encontrar `/ops/login` inspeccionando el código.
-**Esto no es un problema real** porque:
-- La seguridad real está en el backend (bcrypt + JWT `tipo:'operator'`)
-- Sin credenciales válidas en `sys_operators`, la ruta es inútil
-- Para máxima seguridad futura: mover el panel admin a un subdominio/puerto separado
 
 ---
 
@@ -290,15 +283,20 @@ Alguien con conocimientos técnicos podría encontrar `/ops/login` inspeccionand
 - [x] Menú cierra al hacer clic fuera
 - [x] Panel de operadores interno (`/ops/login` + `/ops/dashboard`) — sin enlace en navbar
 - [x] Middleware `requireOperator` — JWT separado del de usuarios normales
+- [x] **Mi Trastero** (`/mi-trastero`) — galería personal con grid, acciones hover, eliminar con confirmación
+- [x] **Subir artículo** (`/subir`) — formulario multer con slots de imagen, vista previa adaptativa, badge "PRINCIPAL"
+- [x] **Grid adaptativo** en tarjetas — se adapta a 1/2/3/4 imágenes sin slots vacíos
+- [x] **Centrado de grid** en vista detalle — último artículo centrado
+- [x] **DELETE** protegido con JWT — borra artículo + imágenes del disco
 
 ---
 
 ## 🔜 Próximos pasos
 
-1. **Pantalla de carga de imágenes** con categorías → desbloquea filtros de búsqueda
-2. **Búsqueda con filtros** por categoría, precio, disponibilidad
-3. **Galería personal** (Mis trasteros) — ver/editar/eliminar los propios
-4. **Detalle de trastero** — vista individual al hacer clic en tarjeta
+1. **Búsqueda con filtros** por categoría, precio, disponibilidad
+2. **Detalle de trastero propio** — vista individual al hacer clic desde Mi Trastero
+3. **Editar artículo** — modificar nombre e imágenes
+4. **Protección de imágenes por API** — endpoint con JWT en lugar de static directo
 5. **Favoritos** — guardar trasteros de otros usuarios
 6. **Auth social** (Google/Microsoft) — pendiente decisión de arquitectura
 7. **Responsive / mobile** — media queries completos
@@ -310,4 +308,7 @@ Alguien con conocimientos técnicos podría encontrar `/ops/login` inspeccionand
 - El JWT expira en **7 días** y se guarda en `localStorage` como `trastero_token`
 - Las contraseñas se hashean con **bcrypt** (10 salt rounds)
 - CORS configurado solo para `http://localhost:3000` (desarrollo)
-- Para producción: cambiar JWT_SECRET, DB_PASSWORD y configurar HTTPS
+- `express.static` bloquea directory listing — no se puede listar `/uploads/`
+- Multer valida tipo MIME (`image/*`) y tamaño (5 MB máx)
+- DELETE verifica `usuario_id` del JWT antes de borrar (no se puede borrar artículos ajenos)
+- Para producción: cambiar JWT_SECRET, DB_PASSWORD, configurar HTTPS y protección de imágenes por API

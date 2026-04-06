@@ -12,6 +12,8 @@ import Contact from './pages/Contact';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import NotFound from './pages/NotFound';
+import MiTrastero from './pages/MiTrastero';
+import SubirTrastero from './pages/SubirTrastero';
 import OpsLogin from './pages/OpsLogin';
 import OpsDashboard from './pages/OpsDashboard';
 
@@ -60,6 +62,8 @@ function AppContent() {
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/profile" element={<Profile user={user} onLogout={handleLogout} />} />
+            <Route path="/mi-trastero" element={<MiTrastero user={user} />} />
+            <Route path="/subir"      element={<SubirTrastero user={user} />} />
             <Route path="/settings" element={<Settings />} />
             {/* Rutas de sistema — sin enlace en navbar */}
             <Route path="/ops/login"     element={<OpsLogin />} />

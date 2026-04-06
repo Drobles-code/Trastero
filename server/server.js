@@ -1,5 +1,6 @@
 const express = require('express');
 const cors    = require('cors');
+const path    = require('path');
 require('dotenv').config();
 
 const trasteroRoutes = require('./routes/trasteros');
@@ -11,6 +12,7 @@ const PORT = process.env.PORT || 5000;
 
 app.use(cors({ origin: 'http://localhost:3000' }));
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
 app.use('/api/trasteros', trasteroRoutes);
 app.use('/api/auth',      authRoutes);
