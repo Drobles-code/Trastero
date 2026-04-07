@@ -13,8 +13,9 @@ const GRID_STYLE = {
   width: '244px',
 };
 
-export function AdaptiveGrid({ ruta, imgs }) {
-  // imgs = array of filenames, filtradas las vacías
+export function AdaptiveGrid({ ruta, imgs, width }) {
+  // imgs = array de filenames, filtradas las vacías
+  const gridStyle = width ? { ...GRID_STYLE, width } : GRID_STYLE;
   const srcs = imgs.filter(Boolean).map(name => `${ruta}/${name}`);
   const n = srcs.length;
 
@@ -22,7 +23,7 @@ export function AdaptiveGrid({ ruta, imgs }) {
 
   if (n === 1) {
     return (
-      <div style={GRID_STYLE}>
+      <div style={gridStyle}>
         <img src={srcs[0]} alt="" loading="lazy"
           style={{ ...IMG_BASE, gridColumn: '1/3', gridRow: '1/3', width: '100%', height: '168px', borderRadius: '0 0 8px 8px' }} />
       </div>
@@ -31,7 +32,7 @@ export function AdaptiveGrid({ ruta, imgs }) {
 
   if (n === 2) {
     return (
-      <div style={GRID_STYLE}>
+      <div style={gridStyle}>
         <img src={srcs[0]} alt="" loading="lazy" style={{ ...IMG_BASE, gridColumn: '1/2', gridRow: '1/3', width: '100%', height: '168px', borderRadius: '0 0 0 8px' }} />
         <img src={srcs[1]} alt="" loading="lazy" style={{ ...IMG_BASE, gridColumn: '2/3', gridRow: '1/3', width: '100%', height: '168px', borderRadius: '0 0 8px 0' }} />
       </div>
@@ -40,18 +41,18 @@ export function AdaptiveGrid({ ruta, imgs }) {
 
   if (n === 3) {
     return (
-      <div style={GRID_STYLE}>
-        <img src={srcs[0]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px', objectFit: 'cover' }} />
-        <img src={srcs[1]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px', objectFit: 'cover' }} />
+      <div style={gridStyle}>
+        <img src={srcs[0]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px' }} />
+        <img src={srcs[1]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px' }} />
         <img src={srcs[2]} alt="" loading="lazy"
-          style={{ ...IMG_BASE, gridColumn: '1/3', width: '100%', height: '84px', objectFit: 'cover', borderRadius: '0 0 8px 8px' }} />
+          style={{ ...IMG_BASE, gridColumn: '1/3', width: '100%', height: '84px', borderRadius: '0 0 8px 8px' }} />
       </div>
     );
   }
 
   // 4 imágenes — grid estándar 2×2
   return (
-    <div style={GRID_STYLE}>
+    <div style={gridStyle}>
       <img src={srcs[0]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px' }} />
       <img src={srcs[1]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px' }} />
       <img src={srcs[2]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px', marginTop: '-4px', borderRadius: '0 0 0 8px' }} />

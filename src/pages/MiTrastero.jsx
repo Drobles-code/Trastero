@@ -223,6 +223,13 @@ const FlatRow = styled.div`
   line-height: 1.4;
 `;
 
+/* ─── Tarjeta agrupada — texto 18px ─────────────────────────── */
+
+const CardPrice  = styled(FlatPrice)`font-size: 18px;`;
+const CardNombre = styled(FlatNombre)`font-size: 18px;`;
+const CardDesc   = styled(FlatDesc)`font-size: 18px;`;
+const CardExtras = styled(FlatExtras)`font-size: 18px;`;
+
 /* ─── Tarjeta ─────────────────────────────────────────────── */
 
 const CardWrapper = styled.div`
@@ -231,7 +238,10 @@ const CardWrapper = styled.div`
   cursor: pointer;
   overflow: hidden;
   border-radius: 10px;
+  background: ${p => p.bg};
+  border: 2px solid rgb(247, 247, 251);
   &:hover .card-actions { opacity: 1; }
+  &:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.35); }
 `;
 
 const CardActions = styled.div`
@@ -501,27 +511,42 @@ const LightboxDot = styled.div`
 /* ─── Tarjeta ─────────────────────────────────────────────── */
 
 function TrasteroCard({ task, onDelete, onOpen, onEdit, theme }) {
-  const imgs = [task.Imagen1, task.Imagen2, task.Imagen3, task.Imagen4].filter(Boolean);
-  return (
-    <CardWrapper bg={theme.modalBg} accent={theme.accent} onClick={() => onOpen(task)}>
-      <article className="location-listing" style={{ margin: 0 }}>
-        <div className="backgroundTitle">
-          <p className="titulo-tras">
-            <img className="img-titulo-tras" src={`${task.Ruta}/${task.Imagen1}`} alt={task.Nombre} loading="lazy" />
-            {task.Nombre}
-          </p>
-        </div>
-        <AdaptiveGrid ruta={task.Ruta} imgs={[task.Imagen1, task.Imagen2, task.Imagen3, task.Imagen4]} />
-      </article>
+  const acc = theme.accent;
+  const bg  = theme.modalBg;
+  const txt = getContrastColor(bg);
+  const precio = task.Precio !== null && task.Precio !== undefined
+    ? task.Precio.toLocaleString('es-ES', { minimumFractionDigits: 0 }) + ' €'
+    : null;
+  const extra = formatExtra(task.Extras);
 
-      <CardActions className="card-actions">
-        <ActionBtn accent={theme.accent} onClick={e => { e.stopPropagation(); onEdit(task); }}>
-          ✏️ Editar
-        </ActionBtn>
-        <ActionBtn danger onClick={e => { e.stopPropagation(); onDelete(task); }}>
-          🗑️ Eliminar
-        </ActionBtn>
-      </CardActions>
+  return (
+    <CardWrapper bg={bg} accent={acc} onClick={() => onOpen(task)}>
+      {/* ── Grid de imágenes con overlay hover ── */}
+      <div style={{ position: 'relative', borderBottom: '2px solid rgb(247, 247, 251)' }}>
+        <AdaptiveGrid ruta={task.Ruta} imgs={[task.Imagen1, task.Imagen2, task.Imagen3, task.Imagen4]} width="100%" />
+        <CardActions className="card-actions">
+          <ActionBtn accent={acc} onClick={e => { e.stopPropagation(); onEdit(task); }}>
+            ✏️ Editar
+          </ActionBtn>
+          <ActionBtn danger onClick={e => { e.stopPropagation(); onDelete(task); }}>
+            🗑️ Eliminar
+          </ActionBtn>
+        </CardActions>
+      </div>
+
+      {/* ── Datos del artículo ── */}
+      <FlatInfo>
+        {precio && <CardPrice accent={acc}>{precio}</CardPrice>}
+        <CardNombre color={txt}>{task.Nombre}</CardNombre>
+        {task.Descripcion && <CardDesc color={txt}>{task.Descripcion}</CardDesc>}
+        {extra && <CardExtras color={txt}>{extra}</CardExtras>}
+        {(task.AceptaCambio || task.Negociable) && (
+          <FlatBadges>
+            {task.AceptaCambio && <FlatBadge accent={acc}>Acepta cambio</FlatBadge>}
+            {task.Negociable   && <FlatBadge accent={acc}>Negociable</FlatBadge>}
+          </FlatBadges>
+        )}
+      </FlatInfo>
     </CardWrapper>
   );
 }
