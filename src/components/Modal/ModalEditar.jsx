@@ -17,13 +17,30 @@ const Overlay = styled.div`
   position: fixed; inset: 0; background: rgba(0,0,0,0.75);
   display: flex; align-items: center; justify-content: center;
   z-index: 2000; padding: 20px;
+  @media (max-width: 600px) {
+    align-items: flex-end;
+    padding: 0;
+  }
 `;
 const Box = styled.div`
   background: ${p => p.bg}; border: 1px solid ${p => p.accent}44;
-  border-radius: 14px; padding: 32px 28px 28px;
-  width: 100%; max-width: 520px; max-height: 90vh;
+  border-radius: 14px; padding: 32px 32px 28px;
+  width: 100%; max-width: 720px; max-height: 90vh;
   overflow-y: auto; position: relative;
   display: flex; flex-direction: column; gap: 14px;
+  @media (max-width: 600px) {
+    border-radius: 16px 16px 0 0;
+    max-height: 95vh;
+    padding: 24px 18px 20px;
+  }
+`;
+const TwoCol = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
 `;
 const CloseBtn = styled.button`
   position: absolute; top: 12px; right: 12px;
@@ -80,7 +97,7 @@ const Dot = styled.span`
   background: ${p => p.checked ? p.accent : p.color + '44'}; transition: background 0.2s;
 `;
 const ExtraGrid = styled.div`
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px;
 `;
 const SlotsRow = styled.div`display: flex; gap: 10px; flex-wrap: wrap;`;
 const Slot = styled.div`
@@ -230,7 +247,11 @@ function ModalEditar({ isOpen, onClose, onGuardado, trastero }) {
       formData.append('negociable',    String(negociable));
       formData.append('acepta_cambio', String(aceptaCambio));
       Object.entries(extras).forEach(([k, v]) => { if (v !== '') formData.append(k, v); });
-      filled.forEach(s => { if (!s.existente) formData.append('imagenes', s.file); });
+      // Indica al servidor el estado de cada slot (posición 1-4)
+      const slotsInfo = slots.map(s => !s ? 'vacio' : s.existente ? 'existente' : 'nueva');
+      formData.append('slots_info', JSON.stringify(slotsInfo));
+      // Solo subir archivos nuevos
+      slots.forEach(s => { if (s && !s.existente) formData.append('imagenes', s.file); });
 
       const res = await fetch(`${API_URL}/api/trasteros/${trastero.id}`, {
         method: 'PUT',
@@ -249,27 +270,31 @@ function ModalEditar({ isOpen, onClose, onGuardado, trastero }) {
   };
 
   return (
-    <Overlay onClick={handleClose}>
-      <Box bg={bg} accent={acc} onClick={e => e.stopPropagation()}>
+    <Overlay>
+      <Box bg={bg} accent={acc}>
         <CloseBtn onClick={handleClose}>✕</CloseBtn>
         <Title color={txt}>Editar artículo</Title>
 
-        {/* Categoría */}
-        <Label color={txt}>Categoría</Label>
-        <Select bg={bg} color={txt} accent={acc} value={categoria}
-          onChange={e => { setCategoria(e.target.value); setSubcategoria(''); }}>
-          <option value="">Sin categoría</option>
-          {CATEGORIAS.map(c => <option key={c.label} value={c.label}>{c.label}</option>)}
-        </Select>
-
-        {catSubs.length > 0 && <>
-          <Label color={txt}>Subcategoría</Label>
-          <Select bg={bg} color={txt} accent={acc} value={subcategoria}
-            onChange={e => setSubcategoria(e.target.value)}>
-            <option value="">Selecciona subcategoría</option>
-            {catSubs.map(s => <option key={s} value={s}>{s}</option>)}
-          </Select>
-        </>}
+        {/* Categoría + Subcategoría en fila */}
+        <TwoCol>
+          <div>
+            <Label color={txt}>Categoría</Label>
+            <Select bg={bg} color={txt} accent={acc} value={categoria} style={{ marginTop: 6 }}
+              onChange={e => { setCategoria(e.target.value); setSubcategoria(''); }}>
+              <option value="">Sin categoría</option>
+              {CATEGORIAS.map(c => <option key={c.label} value={c.label}>{c.label}</option>)}
+            </Select>
+          </div>
+          <div>
+            <Label color={txt}>Subcategoría</Label>
+            <Select bg={bg} color={txt} accent={acc} value={subcategoria} style={{ marginTop: 6 }}
+              onChange={e => setSubcategoria(e.target.value)}
+              disabled={catSubs.length === 0}>
+              <option value="">{catSubs.length === 0 ? '—' : 'Selecciona...'}</option>
+              {catSubs.map(s => <option key={s} value={s}>{s}</option>)}
+            </Select>
+          </div>
+        </TwoCol>
 
         {camposEx.length > 0 && <>
           <Label color={txt}>Detalles de {categoria}</Label>
@@ -312,26 +337,29 @@ function ModalEditar({ isOpen, onClose, onGuardado, trastero }) {
           onChange={e => setDescripcion(e.target.value)}
           placeholder="Detalles del artículo..." />
 
-        <Label color={txt}>Precio</Label>
-        <PriceWrap color={txt}>
-          <Input bg={bg} color={txt} accent={acc} type="number"
-            value={precio} onChange={e => setPrecio(e.target.value)}
-            placeholder="0" min="0" step="1" style={{ paddingRight: 32 }} />
-          <span>€</span>
-        </PriceWrap>
-
-        <ToggleRow>
-          <TogglePill checked={negociable} accent={acc} color={txt}
-            onClick={() => setNegociable(v => !v)}>
-            <Dot checked={negociable} accent={acc} color={txt} />
-            Negociable
-          </TogglePill>
-          <TogglePill checked={aceptaCambio} accent={acc} color={txt}
-            onClick={() => setAceptaCambio(v => !v)}>
-            <Dot checked={aceptaCambio} accent={acc} color={txt} />
-            Acepta cambio
-          </TogglePill>
-        </ToggleRow>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ flex: '1 1 140px', minWidth: 120 }}>
+            <Label color={txt}>Precio</Label>
+            <PriceWrap color={txt} style={{ marginTop: 6 }}>
+              <Input bg={bg} color={txt} accent={acc} type="number"
+                value={precio} onChange={e => setPrecio(e.target.value)}
+                placeholder="0" min="0" step="1" style={{ paddingRight: 32 }} />
+              <span>€</span>
+            </PriceWrap>
+          </div>
+          <ToggleRow style={{ paddingBottom: 2 }}>
+            <TogglePill checked={negociable} accent={acc} color={txt}
+              onClick={() => setNegociable(v => !v)}>
+              <Dot checked={negociable} accent={acc} color={txt} />
+              Negociable
+            </TogglePill>
+            <TogglePill checked={aceptaCambio} accent={acc} color={txt}
+              onClick={() => setAceptaCambio(v => !v)}>
+              <Dot checked={aceptaCambio} accent={acc} color={txt} />
+              Acepta cambio
+            </TogglePill>
+          </ToggleRow>
+        </div>
 
         <Divider accent={acc} />
 

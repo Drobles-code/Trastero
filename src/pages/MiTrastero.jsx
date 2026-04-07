@@ -6,6 +6,7 @@ import '../components/Formularios/Cargarimg/Cargaimg.css';
 import ModalSubir from '../components/Modal/ModalSubir';
 import ModalEditar from '../components/Modal/ModalEditar';
 import { formatExtra } from '../constants/categorias';
+import { AdaptiveGrid } from '../components/Formularios/Cargarimg/Cargaimg';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -142,32 +143,75 @@ const FlatCard = styled.div`
   overflow: hidden;
   cursor: pointer;
   background: ${p => p.bg};
-  border: 1px solid ${p => p.accent}22;
+  border: 2px solid rgb(247, 247, 251);
   &:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.35); }
   &:hover .card-actions { opacity: 1; }
 `;
 
 const FlatImg = styled.img`
   width: 100%;
-  height: 200px;
+  height: 185px;
   object-fit: cover;
   display: block;
 `;
 
 const FlatInfo = styled.div`
-  padding: 8px 10px 10px;
+  padding: 10px 12px 12px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
+`;
+
+const FlatPrice = styled.div`
+  font-size: 20px;
+  font-weight: 800;
+  color: ${p => p.accent};
+  line-height: 1.1;
+  margin-bottom: 1px;
 `;
 
 const FlatNombre = styled.div`
-  font-size: 12px;
+  font-size: 20px;
   font-weight: 700;
   color: ${p => p.color};
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+`;
+
+const FlatDesc = styled.div`
+  font-size: 20px;
+  color: ${p => p.color};
+  opacity: 0.65;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+`;
+
+const FlatExtras = styled.div`
+  font-size: 20px;
+  color: ${p => p.color};
+  opacity: 0.75;
+  margin-top: 2px;
+`;
+
+const FlatBadges = styled.div`
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-top: 3px;
+`;
+
+const FlatBadge = styled.span`
+  font-size: 14px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: ${p => p.accent}22;
+  color: ${p => p.accent};
+  border: 1px solid ${p => p.accent}44;
 `;
 
 const FlatRow = styled.div`
@@ -179,34 +223,30 @@ const FlatRow = styled.div`
   line-height: 1.4;
 `;
 
-const FlatPrice = styled.div`
-  font-size: 16px;
-  font-weight: 800;
-  color: ${p => p.accent};
-  line-height: 1.1;
-`;
-
 /* ─── Tarjeta ─────────────────────────────────────────────── */
 
 const CardWrapper = styled.div`
   position: relative;
   width: 249px;
   cursor: pointer;
+  overflow: hidden;
+  border-radius: 10px;
   &:hover .card-actions { opacity: 1; }
 `;
 
 const CardActions = styled.div`
   position: absolute;
-  top: 58px;
+  top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   background: rgba(0,0,0,0.55);
-  border-radius: 0 0 8px 8px;
+  border-radius: 8px 8px 0 0;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   gap: 10px;
+  padding-bottom: 14px;
   opacity: 0;
   transition: opacity 0.2s;
   z-index: 10;
@@ -414,25 +454,64 @@ const DetailDesc = styled.p`
   white-space: pre-wrap;
 `;
 
+/* ─── Lightbox ───────────────────────────────────────────── */
+
+const LightboxOverlay = styled.div`
+  position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 3000;
+`;
+
+const LightboxImg = styled.img`
+  max-width: 90vw; max-height: 85vh;
+  object-fit: contain; border-radius: 8px;
+  user-select: none; display: block;
+`;
+
+const LightboxNav = styled.button`
+  position: absolute; top: 50%; transform: translateY(-50%);
+  ${p => p.prev ? 'left: 16px;' : 'right: 16px;'}
+  background: rgba(255,255,255,0.12); border: none; color: #fff;
+  font-size: 28px; width: 48px; height: 48px; border-radius: 50%;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s;
+  &:hover { background: rgba(255,255,255,0.25); }
+  &:disabled { opacity: 0.2; cursor: default; }
+`;
+
+const LightboxClose = styled.button`
+  position: absolute; top: 16px; right: 16px;
+  background: rgba(255,255,255,0.12); border: none; color: #fff;
+  font-size: 20px; width: 40px; height: 40px; border-radius: 50%;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  &:hover { background: rgba(255,255,255,0.25); }
+`;
+
+const LightboxDots = styled.div`
+  position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 8px;
+`;
+
+const LightboxDot = styled.div`
+  width: 8px; height: 8px; border-radius: 50%;
+  background: ${p => p.active ? '#fff' : 'rgba(255,255,255,0.35)'};
+  transition: background 0.2s; cursor: pointer;
+`;
+
 /* ─── Tarjeta ─────────────────────────────────────────────── */
 
 function TrasteroCard({ task, onDelete, onOpen, onEdit, theme }) {
   const imgs = [task.Imagen1, task.Imagen2, task.Imagen3, task.Imagen4].filter(Boolean);
   return (
-    <CardWrapper onClick={() => onOpen(task)}>
-      <article className="location-listing">
+    <CardWrapper bg={theme.modalBg} accent={theme.accent} onClick={() => onOpen(task)}>
+      <article className="location-listing" style={{ margin: 0 }}>
         <div className="backgroundTitle">
           <p className="titulo-tras">
             <img className="img-titulo-tras" src={`${task.Ruta}/${task.Imagen1}`} alt={task.Nombre} loading="lazy" />
             {task.Nombre}
           </p>
         </div>
-        <div className="grid">
-          {imgs[0] && <img className="item img-gif-top-left"     src={`${task.Ruta}/${imgs[0]}`} alt="" loading="lazy" />}
-          {imgs[1] && <img className="item img-gif-top-right"    src={`${task.Ruta}/${imgs[1]}`} alt="" loading="lazy" />}
-          {imgs[2] && <img className="item img-gif-left-bottom"  src={`${task.Ruta}/${imgs[2]}`} alt="" loading="lazy" />}
-          {imgs[3] && <img className="item img-gif-right-bottom" src={`${task.Ruta}/${imgs[3]}`} alt="" loading="lazy" />}
-        </div>
+        <AdaptiveGrid ruta={task.Ruta} imgs={[task.Imagen1, task.Imagen2, task.Imagen3, task.Imagen4]} />
       </article>
 
       <CardActions className="card-actions">
@@ -463,6 +542,18 @@ function MiTrastero({ user }) {
   const [vistaPlana,      setVistaPlana]      = useState(false);
   const [editar,          setEditar]          = useState(null);
   const [confirmarImagen, setConfirmarImagen] = useState(null); // { task, posicion }
+  const [lightbox, setLightbox] = useState(null); // { imgs: [], idx: 0 }
+
+  useEffect(() => {
+    if (!lightbox) return;
+    const handler = (e) => {
+      if (e.key === 'Escape') setLightbox(null);
+      if (e.key === 'ArrowRight') setLightbox(p => p.idx < p.imgs.length - 1 ? { ...p, idx: p.idx + 1 } : p);
+      if (e.key === 'ArrowLeft')  setLightbox(p => p.idx > 0 ? { ...p, idx: p.idx - 1 } : p);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [lightbox]);
 
   useEffect(() => {
     if (!user) return;
@@ -624,6 +715,34 @@ function MiTrastero({ user }) {
         </Overlay>
       )}
 
+      {/* ── Lightbox ── */}
+      {lightbox && (
+        <LightboxOverlay onClick={() => setLightbox(null)}>
+          <LightboxClose onClick={() => setLightbox(null)}>✕</LightboxClose>
+          <LightboxNav prev disabled={lightbox.idx === 0}
+            onClick={e => { e.stopPropagation(); setLightbox(p => ({ ...p, idx: p.idx - 1 })); }}>
+            ‹
+          </LightboxNav>
+          <LightboxImg
+            src={lightbox.imgs[lightbox.idx]}
+            alt=""
+            onClick={e => e.stopPropagation()}
+          />
+          <LightboxNav disabled={lightbox.idx === lightbox.imgs.length - 1}
+            onClick={e => { e.stopPropagation(); setLightbox(p => ({ ...p, idx: p.idx + 1 })); }}>
+            ›
+          </LightboxNav>
+          {lightbox.imgs.length > 1 && (
+            <LightboxDots onClick={e => e.stopPropagation()}>
+              {lightbox.imgs.map((_, i) => (
+                <LightboxDot key={i} active={i === lightbox.idx}
+                  onClick={() => setLightbox(p => ({ ...p, idx: i }))} />
+              ))}
+            </LightboxDots>
+          )}
+        </LightboxOverlay>
+      )}
+
       {/* ── Header ── */}
       <HeaderCard bg={bg} accent={acc}>
         <UserInfo>
@@ -696,8 +815,11 @@ function MiTrastero({ user }) {
                   ? task.Precio.toLocaleString('es-ES', { minimumFractionDigits: 0 }) + ' €'
                   : null;
                 const extra = formatExtra(task.Extras);
+                const allImgs = [task.Imagen1, task.Imagen2, task.Imagen3, task.Imagen4]
+                  .filter(Boolean).map(n => `${task.Ruta}/${n}`);
                 return (
-                  <FlatCard key={`${task.id}-${i}`} bg={bg2} accent={acc} onClick={() => setDetalle(task)}>
+                  <FlatCard key={`${task.id}-${i}`} bg={bg2} accent={acc}
+                    onClick={() => setLightbox({ imgs: allImgs, idx: i })}>
                     <div style={{ position: 'relative' }}>
                       <FlatImg src={`${task.Ruta}/${img}`} alt={task.Nombre} loading="lazy" />
                       <CardActions className="card-actions">
@@ -710,18 +832,16 @@ function MiTrastero({ user }) {
                       </CardActions>
                     </div>
                     <FlatInfo>
+                      {precio && <FlatPrice accent={acc}>{precio}</FlatPrice>}
                       <FlatNombre color={txt}>{task.Nombre}</FlatNombre>
-                      {task.Descripcion && (
-                        <FlatRow color={txt}><span style={{ opacity: 0.6 }}>Descripción :</span>&nbsp;{task.Descripcion}</FlatRow>
+                      {task.Descripcion && <FlatDesc color={txt}>{task.Descripcion}</FlatDesc>}
+                      {extra && <FlatExtras color={txt}>{extra}</FlatExtras>}
+                      {(task.AceptaCambio || task.Negociable) && (
+                        <FlatBadges>
+                          {task.AceptaCambio && <FlatBadge accent={acc}>Acepta cambio</FlatBadge>}
+                          {task.Negociable   && <FlatBadge accent={acc}>Negociable</FlatBadge>}
+                        </FlatBadges>
                       )}
-                      {task.Precio !== null && task.Precio !== undefined && (
-                        <FlatRow color={txt}><span style={{ opacity: 0.6 }}>Precio :</span>&nbsp;<b>{precio}</b></FlatRow>
-                      )}
-                      {extra && (
-                        <FlatRow color={txt}><span style={{ opacity: 0.6 }}>Extras :</span>&nbsp;{extra}</FlatRow>
-                      )}
-                      <FlatRow color={txt}><span style={{ opacity: 0.6 }}>Acepta cambio :</span>&nbsp;<b style={{ color: task.AceptaCambio ? acc : 'inherit' }}>{task.AceptaCambio ? 'SI' : 'NO'}</b></FlatRow>
-                      <FlatRow color={txt}><span style={{ opacity: 0.6 }}>Negociable :</span>&nbsp;<b style={{ color: task.Negociable ? acc : 'inherit' }}>{task.Negociable ? 'SI' : 'NO'}</b></FlatRow>
                     </FlatInfo>
                   </FlatCard>
                 );

@@ -308,6 +308,51 @@ const ProtectedSub = styled.p`
   max-width: 320px;
 `;
 
+/* ─── Imagen de trastero ───────────────────────────────────── */
+
+const DatosGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: start;
+
+  @media (max-width: 500px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const ImgSlot = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+`;
+
+const ImgSlotImg = styled.img`
+  width: 120px;
+  height: 120px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 2px solid ${p => p.accent};
+`;
+
+const ImgSlotLabel = styled.label`
+  display: inline-block;
+  padding: 7px 14px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  color: ${p => getContrastColor(p.bg || '#000')}99;
+  border: 1px solid ${p => getContrastColor(p.bg || '#000')}33;
+  transition: all 0.2s;
+  text-align: center;
+  &:hover { background: ${p => getContrastColor(p.bg || '#000')}11; }
+`;
+
+const DEFAULT_IMG = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' rx='10' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='52' fill='%23666'%3E%F0%9F%93%A6%3C/text%3E%3C/svg%3E`;
+
 /* ─── Tipos de vía ─────────────────────────────────────────── */
 
 const TIPOS_VIA = [
@@ -337,6 +382,7 @@ function Profile({ user, onLogout }) {
     puerta: '',
     codigoPostal: '',
     pais: 'España',
+    trasteroImg: null,
   });
   const [draft, setDraft] = useState(profileData);
 
@@ -403,6 +449,14 @@ function Profile({ user, onLogout }) {
     setProfileData(draft);
     localStorage.setItem(`userProfile_${user.id}`, JSON.stringify(draft));
     setIsEditing(false);
+  };
+
+  const handleImgChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => setDraft(prev => ({ ...prev, trasteroImg: ev.target.result }));
+    reader.readAsDataURL(file);
   };
 
   const handleLogout = () => {
@@ -495,53 +549,79 @@ function Profile({ user, onLogout }) {
         <Card bg={bg} border={acc + '44'}>
           <SectionTitle accent={acc}>Datos personales</SectionTitle>
 
-          <FormGroup>
-            <Label bg={bg} htmlFor="nombre">Nombre completo</Label>
-            <Input
-              id="nombre" name="nombre" type="text"
-              value={data.nombre}
-              onChange={handleChange}
-              placeholder="Tu nombre completo"
-              editing={isEditing} bg={bg} accent={acc}
-            />
-          </FormGroup>
+          <DatosGrid>
+            <div>
+              <FormGroup>
+                <Label bg={bg} htmlFor="nombre">Nombre completo</Label>
+                <Input
+                  id="nombre" name="nombre" type="text"
+                  value={data.nombre}
+                  onChange={handleChange}
+                  placeholder="Tu nombre completo"
+                  editing={isEditing} bg={bg} accent={acc}
+                />
+              </FormGroup>
 
-          <FormGroup>
-            <Label bg={bg} htmlFor="telefono">Teléfono</Label>
-            <Input
-              id="telefono" name="telefono" type="tel"
-              value={data.telefono}
-              onChange={handleChange}
-              placeholder="+34 600 000 000"
-              editing={isEditing} bg={bg} accent={acc}
-            />
-          </FormGroup>
+              <FormGroup>
+                <Label bg={bg} htmlFor="telefono">Teléfono</Label>
+                <Input
+                  id="telefono" name="telefono" type="tel"
+                  value={data.telefono}
+                  onChange={handleChange}
+                  placeholder="+34 600 000 000"
+                  editing={isEditing} bg={bg} accent={acc}
+                />
+              </FormGroup>
 
-          <FormGroup>
-            <Label bg={bg} htmlFor="tipoUsuario">Tipo de cuenta</Label>
-            <Select
-              id="tipoUsuario" name="tipoUsuario"
-              value={data.tipoUsuario}
-              onChange={handleChange}
-              editing={isEditing} bg={bg} accent={acc}
-            >
-              <option value="persona">Persona</option>
-              <option value="empresa">Empresa</option>
-            </Select>
-          </FormGroup>
+              <FormGroup>
+                <Label bg={bg} htmlFor="tipoUsuario">Tipo de cuenta</Label>
+                <Select
+                  id="tipoUsuario" name="tipoUsuario"
+                  value={data.tipoUsuario}
+                  onChange={handleChange}
+                  editing={isEditing} bg={bg} accent={acc}
+                >
+                  <option value="persona">Persona</option>
+                  <option value="empresa">Empresa</option>
+                </Select>
+              </FormGroup>
 
-          {data.tipoUsuario === 'empresa' && (
-            <FormGroup>
-              <Label bg={bg} htmlFor="personaContacto">Persona de contacto</Label>
-              <Input
-                id="personaContacto" name="personaContacto" type="text"
-                value={data.personaContacto}
-                onChange={handleChange}
-                placeholder="Nombre del responsable"
-                editing={isEditing} bg={bg} accent={acc}
+              {data.tipoUsuario === 'empresa' && (
+                <FormGroup>
+                  <Label bg={bg} htmlFor="personaContacto">Persona de contacto</Label>
+                  <Input
+                    id="personaContacto" name="personaContacto" type="text"
+                    value={data.personaContacto}
+                    onChange={handleChange}
+                    placeholder="Nombre del responsable"
+                    editing={isEditing} bg={bg} accent={acc}
+                  />
+                </FormGroup>
+              )}
+            </div>
+
+            <ImgSlot>
+              <ImgSlotImg
+                src={data.trasteroImg || DEFAULT_IMG}
+                alt="Imagen de trastero"
+                accent={acc}
               />
-            </FormGroup>
-          )}
+              {isEditing && (
+                <>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    id="trasteroImgInput"
+                    style={{ display: 'none' }}
+                    onChange={handleImgChange}
+                  />
+                  <ImgSlotLabel htmlFor="trasteroImgInput" bg={bg}>
+                    Cambiar imagen
+                  </ImgSlotLabel>
+                </>
+              )}
+            </ImgSlot>
+          </DatosGrid>
         </Card>
 
         {/* ── DIRECCIÓN ── */}

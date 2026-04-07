@@ -230,29 +230,44 @@ router.put('/:id', authMiddleware, (req, res, next) => {
        precioVal, negVal, cambioVal, JSON.stringify(extrasObj), id]
     );
 
-    if (req.files && req.files.length > 0) {
-      const API_URL = process.env.API_URL || 'http://localhost:5000';
+    // Procesar slots individualmente para no borrar imágenes existentes
+    const API_URL   = process.env.API_URL || 'http://localhost:5000';
+    const slotsInfo = JSON.parse(req.body.slots_info || '["existente","existente","existente","existente"]');
+    let   fileIdx   = 0;
 
-      // Borrar imágenes antiguas del disco
-      const imgRows = await pool.query('SELECT ruta FROM imagenes WHERE trastero_id = $1', [id]);
-      for (const img of imgRows.rows) {
-        try {
-          const url      = new URL(img.ruta);
-          const filePath = path.join(__dirname, '../public', url.pathname);
-          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-        } catch {}
-      }
+    for (let i = 0; i < 4; i++) {
+      const estado = slotsInfo[i]; // 'existente' | 'nueva' | 'vacio'
+      const pos    = i + 1;
 
-      await pool.query('DELETE FROM imagenes WHERE trastero_id = $1', [id]);
-
-      for (let i = 0; i < req.files.length; i++) {
-        const file = req.files[i];
+      if (estado === 'vacio') {
+        // Borrar la imagen de esa posición si existía
+        const row = await pool.query('SELECT ruta FROM imagenes WHERE trastero_id=$1 AND posicion=$2', [id, pos]);
+        if (row.rows.length > 0) {
+          try {
+            const url = new URL(row.rows[0].ruta);
+            const fp  = path.join(__dirname, '../public', url.pathname);
+            if (fs.existsSync(fp)) fs.unlinkSync(fp);
+          } catch {}
+          await pool.query('DELETE FROM imagenes WHERE trastero_id=$1 AND posicion=$2', [id, pos]);
+        }
+      } else if (estado === 'nueva' && req.files[fileIdx]) {
+        // Reemplazar o insertar imagen nueva en esta posición
+        const file = req.files[fileIdx++];
         const ruta = `${API_URL}/uploads/${req.usuario.id}/${file.filename}`;
-        await pool.query(
-          'INSERT INTO imagenes (trastero_id, posicion, ruta) VALUES ($1, $2, $3)',
-          [id, i + 1, ruta]
-        );
+        // Borrar archivo anterior si existía
+        const row = await pool.query('SELECT ruta FROM imagenes WHERE trastero_id=$1 AND posicion=$2', [id, pos]);
+        if (row.rows.length > 0) {
+          try {
+            const url = new URL(row.rows[0].ruta);
+            const fp  = path.join(__dirname, '../public', url.pathname);
+            if (fs.existsSync(fp)) fs.unlinkSync(fp);
+          } catch {}
+          await pool.query('UPDATE imagenes SET ruta=$1 WHERE trastero_id=$2 AND posicion=$3', [ruta, id, pos]);
+        } else {
+          await pool.query('INSERT INTO imagenes (trastero_id, posicion, ruta) VALUES ($1,$2,$3)', [id, pos, ruta]);
+        }
       }
+      // 'existente' → no hacer nada, la imagen ya está en DB
     }
 
     const actualizado = await pool.query(`

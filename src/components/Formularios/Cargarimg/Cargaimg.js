@@ -10,10 +10,10 @@ const IMG_BASE = {
 const GRID_STYLE = {
   display: 'grid',
   gridTemplateColumns: '1fr 1fr',
-  width: '249px',
+  width: '244px',
 };
 
-function AdaptiveGrid({ ruta, imgs }) {
+export function AdaptiveGrid({ ruta, imgs }) {
   // imgs = array of filenames, filtradas las vacías
   const srcs = imgs.filter(Boolean).map(name => `${ruta}/${name}`);
   const n = srcs.length;
@@ -51,11 +51,11 @@ function AdaptiveGrid({ ruta, imgs }) {
 
   // 4 imágenes — grid estándar 2×2
   return (
-    <div className="grid">
-      <img src={srcs[0]} alt="" loading="lazy" className="item img-gif-top-left" />
-      <img src={srcs[1]} alt="" loading="lazy" className="item img-gif-top-right" />
-      <img src={srcs[2]} alt="" loading="lazy" className="item img-gif-left-bottom" />
-      <img src={srcs[3]} alt="" loading="lazy" className="item img-gif-right-bottom" />
+    <div style={GRID_STYLE}>
+      <img src={srcs[0]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px' }} />
+      <img src={srcs[1]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px' }} />
+      <img src={srcs[2]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px', marginTop: '-4px', borderRadius: '0 0 0 8px' }} />
+      <img src={srcs[3]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px', marginTop: '-4px', borderRadius: '0 0 8px 0' }} />
     </div>
   );
 }

@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["start"],
       "port": 3000
+    },
+    {
+      "name": "trastero-server",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["server/server.js"],
+      "port": 5000
     }
   ]
 }
