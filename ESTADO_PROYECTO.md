@@ -1,14 +1,14 @@
 # 📦 Trastero — Estado del Proyecto
 
 > 📌 **Este archivo está en git** — sin credenciales. Las contraseñas van solo en `server/.env` (no subir).
-> Última actualización: 2026-04-06
+> Última actualización: 2026-04-07
 
 ---
 
 ## 🗂️ ¿Qué es este proyecto?
 
 Aplicación web para gestión y visualización de trasteros/almacenes.
-Los usuarios pueden ver la galería pública sin sesión. Con sesión pueden gestionar su perfil y sus propios artículos (subir, ver, eliminar).
+Los usuarios pueden ver la galería pública sin sesión. Con sesión pueden gestionar su perfil y sus propios artículos (subir, ver, editar, eliminar).
 
 ---
 
@@ -105,9 +105,13 @@ REACT_APP_API_URL=http://localhost:5000
 | id | SERIAL PK | |
 | nombre | VARCHAR(255) | |
 | usuario_id | INT FK | → usuarios |
+| categoria | VARCHAR(100) | |
+| subcategoria | VARCHAR(100) | |
 | descripcion | TEXT | |
 | precio | DECIMAL(10,2) | |
+| negociable | BOOLEAN | default false |
 | acepta_cambio | BOOLEAN | default false |
+| extras | JSONB | default '{}' — campos dinámicos por categoría |
 | created_at | TIMESTAMP | |
 
 #### `imagenes`
@@ -124,12 +128,6 @@ REACT_APP_API_URL=http://localhost:5000
 | id | SERIAL PK |
 | nombre | VARCHAR(100) UNIQUE |
 | descripcion | TEXT |
-
-#### `trastero_categorias` (many-to-many)
-| Campo | Tipo |
-|-------|------|
-| trastero_id | FK → trasteros |
-| categoria_id | FK → categorias |
 
 #### `preferencias_usuario`
 Guarda el tema de color por usuario (background, text, accent, modal, navbar, card_title).
@@ -156,30 +154,43 @@ Guarda el tema de color por usuario (background, text, accent, modal, navbar, ca
 | GET | `/api/trasteros?q=texto` | — | — | Filtrado por nombre |
 | GET | `/api/trasteros?usuario_id=X` | — | — | Trasteros de un usuario |
 | GET | `/api/trasteros/:nombre` | — | — | Trastero individual |
-| POST | `/api/trasteros` | JWT Bearer | multipart: `nombre` + `imagenes[]` | Trastero creado |
+| POST | `/api/trasteros` | JWT Bearer | multipart: campos + `imagenes[]` | Trastero creado |
+| PUT | `/api/trasteros/:id` | JWT Bearer | multipart: campos + `slots_info` + `imagenes[]` | Trastero actualizado |
 | DELETE | `/api/trasteros/:id` | JWT Bearer | — | `{ ok: true }` |
+| DELETE | `/api/trasteros/:id/imagenes/:pos` | JWT Bearer | — | Trastero actualizado o `{ deleted: true }` |
 | POST | `/api/auth/login` | — | `{ email, password }` | `{ token, usuario }` |
 | POST | `/api/auth/registro` | — | `{ nombre, email, password }` | `{ token, usuario }` |
 | POST | `/api/ops/login` | — | `{ email, password }` | `{ token, operator }` |
 | GET | `/api/ops/usuarios` | JWT operator | — | Lista de usuarios |
 | GET | `/api/ops/stats` | JWT operator | — | `{ usuarios: N, trasteros: N }` |
 
-### Subida de imágenes
+### Subida y edición de imágenes
 - Multer guarda en `server/public/uploads/{usuario_id}/{timestamp}-{random}.ext`
 - Express sirve la carpeta como estática: `GET /uploads/{usuario_id}/{filename}`
-- Límite: 4 imágenes por artículo, 5 MB por imagen
-- Solo tipos `image/*`
+- Límite: 4 imágenes por artículo, 5 MB por imagen, solo `image/*`
+- **slots_info**: JSON array enviado con PUT para indicar el estado de cada slot: `'existente'|'nueva'|'vacio'`
+  - `existente` → no tocar
+  - `nueva` → insertar/reemplazar con archivo subido
+  - `vacio` → borrar imagen de DB y disco
+- El servidor procesa cada slot por posición (1-4) de forma independiente
 
 ### Formato de respuesta de trastero
 ```json
 {
   "id": 1,
-  "Nombre": "flor",
+  "Nombre": "coche",
   "Ruta": "http://localhost:5000/uploads/3",
   "Imagen1": "1712345678-abc.jpg",
   "Imagen2": "1712345679-def.jpg",
-  "Imagen3": "",
-  "Imagen4": ""
+  "Imagen3": null,
+  "Imagen4": null,
+  "Precio": 1500,
+  "Descripcion": "Buen estado",
+  "Negociable": true,
+  "AceptaCambio": false,
+  "Categoria": "Motor",
+  "Subcategoria": "Coches",
+  "Extras": { "km": "15000", "anio": "2018", "combustible": "Gasolina" }
 }
 ```
 
@@ -213,47 +224,50 @@ Guarda el tema de color por usuario (background, text, accent, modal, navbar, ca
 
 ```
 Trastero/
-├── public/index.html              ← fondo oscuro pre-React (sin destello)
+├── public/index.html                  ← fondo oscuro pre-React (sin destello)
 ├── src/
-│   ├── App.js                     ← rutas, estado usuario, handleLogin/Logout
-│   ├── context/ThemeContext.js    ← tema global con localStorage
+│   ├── App.js                         ← rutas, estado usuario, handleLogin/Logout
+│   ├── context/ThemeContext.js        ← tema global con localStorage
+│   ├── constants/categorias.js        ← árbol categorías/subcategorías + CAMPOS_EXTRA + formatExtra()
 │   ├── components/
 │   │   ├── Auth/
-│   │   │   ├── SignInContent.jsx  ← login → POST /api/auth/login
-│   │   │   └── SignUpContent.jsx  ← registro → POST /api/auth/registro
-│   │   ├── Modal/ModalLogin.jsx   ← modal overlay reutilizable
+│   │   │   ├── SignInContent.jsx      ← login → POST /api/auth/login
+│   │   │   └── SignUpContent.jsx      ← registro → POST /api/auth/registro
+│   │   ├── Modal/
+│   │   │   ├── ModalLogin.jsx         ← modal overlay reutilizable
+│   │   │   ├── ModalSubir.jsx         ← crear artículo (todos los campos)
+│   │   │   └── ModalEditar.jsx        ← editar artículo (pre-rellena desde DB, slots_info)
 │   │   └── Formularios/
-│   │       ├── Header/Navbar.jsx  ← nav, modal auth, chip usuario
+│   │       ├── Header/Navbar.jsx      ← nav, modal auth, chip usuario
 │   │       ├── Principal/Principal.js ← galería principal
-│   │       ├── Cargarimg/Cargaimg.js  ← tarjeta con grid adaptativo (1/2/3/4 imgs)
-│   │       └── De/De.js           ← vista detalle con grid centrado
+│   │       ├── Cargarimg/
+│   │       │   ├── Cargaimg.js        ← AdaptiveGrid (export) + Cargaimg class
+│   │       │   └── Cargaimg.css       ← estilos: location-listing, titulo-tras, item
+│   │       └── De/De.js               ← vista detalle con grid centrado
 │   └── pages/
-│       ├── MiTrastero.jsx         ← galería personal del usuario (protegida)
-│       ├── SubirTrastero.jsx      ← formulario subida artículo + imágenes
-│       ├── Profile.jsx            ← perfil completo (protegido)
-│       ├── Settings.jsx           ← selector de tema
-│       ├── OpsLogin.jsx           ← login panel operadores (/ops/login)
-│       └── OpsDashboard.jsx       ← dashboard operadores (/ops/dashboard)
+│       ├── MiTrastero.jsx             ← galería personal: vista agrupada + vista plana + lightbox
+│       ├── Profile.jsx                ← perfil: datos personales + dirección + imagen trastero + ranking
+│       ├── Settings.jsx               ← selector de tema
+│       ├── OpsLogin.jsx               ← login panel operadores (/ops/login)
+│       └── OpsDashboard.jsx           ← dashboard operadores (/ops/dashboard)
 ├── server/
-│   ├── server.js                  ← Express app, puerto 5000, sirve /uploads
-│   ├── db.js                      ← pool PostgreSQL
-│   ├── .env                       ← credenciales (NO en git)
-│   ├── public/uploads/            ← imágenes subidas por usuarios
+│   ├── server.js                      ← Express, puerto 5000, sirve /uploads, error handler JSON
+│   ├── db.js                          ← pool PostgreSQL
+│   ├── .env                           ← credenciales (NO en git)
+│   ├── public/uploads/                ← imágenes subidas por usuarios
 │   ├── middleware/
-│   │   ├── authMiddleware.js      ← verifica JWT Bearer → req.usuario
-│   │   └── requireOperator.js    ← verifica JWT tipo:'operator'
+│   │   ├── authMiddleware.js          ← verifica JWT Bearer → req.usuario
+│   │   └── requireOperator.js        ← verifica JWT tipo:'operator'
 │   └── routes/
-│       ├── auth.js                ← login + registro usuarios
-│       ├── trasteros.js           ← GET/POST/DELETE trasteros + multer
-│       └── ops.js                 ← panel operadores
-└── ESTADO_PROYECTO.md             ← este archivo (en git, sin credenciales)
+│       ├── auth.js                    ← login + registro usuarios
+│       ├── trasteros.js               ← CRUD trasteros + multer + slots_info
+│       └── ops.js                     ← panel operadores
+└── ESTADO_PROYECTO.md                 ← este archivo (en git, sin credenciales)
 ```
 
 ---
 
 ## 🔐 Sistema de operadores (mantenimiento)
-
-Acceso separado de usuarios normales — tabla `sys_operators`.
 
 | Item | Detalle |
 |---|---|
@@ -262,7 +276,6 @@ Acceso separado de usuarios normales — tabla `sys_operators`.
 | Middleware | `server/middleware/requireOperator.js` |
 | JWT | `{ tipo: 'operator' }` — incompatible con tokens de usuarios |
 | Dashboard | `/ops/dashboard` — stats + lista de usuarios |
-| Rutas protegidas | `GET /api/ops/usuarios`, `GET /api/ops/stats` |
 
 > La URL no aparece en ningún menú ni enlace de la app.
 
@@ -271,35 +284,40 @@ Acceso separado de usuarios normales — tabla `sys_operators`.
 ## ✅ Funcionalidades implementadas
 
 - [x] Galería principal con CSS Grid (visible sin login)
-- [x] Carga inmediata desde JSON, API en background (3s timeout)
 - [x] Lazy loading de imágenes
 - [x] Fondo oscuro pre-React (sin destello blanco)
 - [x] Buscador en tiempo real + búsqueda en BD
 - [x] Modal de login/registro unificado en Navbar
 - [x] Auth real: bcrypt + JWT + PostgreSQL
 - [x] Chip avatar+nombre en navbar al iniciar sesión
-- [x] Perfil completo: dirección, teléfono, tipo persona/empresa, ranking
 - [x] Tema global personalizable con localStorage
-- [x] Menú cierra al hacer clic fuera
-- [x] Panel de operadores interno (`/ops/login` + `/ops/dashboard`) — sin enlace en navbar
-- [x] Middleware `requireOperator` — JWT separado del de usuarios normales
-- [x] **Mi Trastero** (`/mi-trastero`) — galería personal con grid, acciones hover, eliminar con confirmación
-- [x] **Subir artículo** (`/subir`) — formulario multer con slots de imagen, vista previa adaptativa, badge "PRINCIPAL"
-- [x] **Grid adaptativo** en tarjetas — se adapta a 1/2/3/4 imágenes sin slots vacíos
-- [x] **Centrado de grid** en vista detalle — último artículo centrado
-- [x] **DELETE** protegido con JWT — borra artículo + imágenes del disco
+- [x] Panel de operadores interno (`/ops/login` + `/ops/dashboard`)
+- [x] **Mi Trastero** (`/mi-trastero`) — galería personal protegida con JWT
+  - [x] Vista agrupada: imagen grid sin barra de título + datos debajo (precio 18px, nombre, descripción, extras, badges)
+  - [x] Vista plana: imagen individual con lightbox + datos completos (20px) + Editar/Eliminar
+  - [x] Lightbox con navegación teclado (←→ Esc) y puntos indicadores
+  - [x] Hover overlay con botones Editar / Eliminar sobre la zona de imágenes
+  - [x] CardWrapper con borde blanco, border-radius, overflow:hidden
+- [x] **AdaptiveGrid** (`Cargaimg.js`) — grid adaptativo a 1/2/3/4 imágenes, prop `width` opcional
+- [x] **ModalSubir** — crear artículo: nombre, categoría, subcategoría, descripción, precio, negociable, acepta cambio, extras dinámicos, hasta 4 imágenes con preview
+- [x] **ModalEditar** — editar artículo: pre-rellena todos los campos, manejo de slots (existente/nueva/vacío), no cierra al hacer clic fuera, ancho 720px responsive
+- [x] **Sistema slots_info** — PUT envía FormData con `slots_info` JSON: el servidor procesa cada posición de imagen de forma independiente (no borra todo y reinsertar)
+- [x] **Error handler JSON global** en Express — nunca devuelve HTML en errores
+- [x] **Multer inline error capture** en POST/PUT — devuelve JSON si falla validación de archivo
+- [x] **Perfil** (`/profile`) — datos personales, dirección, tipo cuenta, imagen de trastero (upload base64 → localStorage), ranking
+- [x] DELETE protegido con JWT — borra artículo + imágenes del disco
+- [x] DELETE imagen suelta — elimina solo una posición; si era la única, elimina el artículo
 
 ---
 
 ## 🔜 Próximos pasos
 
-1. **Búsqueda con filtros** por categoría, precio, disponibilidad
-2. **Detalle de trastero propio** — vista individual al hacer clic desde Mi Trastero
-3. **Editar artículo** — modificar nombre e imágenes
-4. **Protección de imágenes por API** — endpoint con JWT en lugar de static directo
+1. **ModalSubir** — aplicar mismas mejoras que ModalEditar (más ancho, misma fila precio/toggles, misma fila categoría/subcategoría)
+2. **Búsqueda con filtros** — por categoría, precio, disponibilidad
+3. **Página pública de anuncios** — vista para otros usuarios
+4. **Responsive / mobile** — media queries completos
 5. **Favoritos** — guardar trasteros de otros usuarios
-6. **Auth social** (Google/Microsoft) — pendiente decisión de arquitectura
-7. **Responsive / mobile** — media queries completos
+6. **Protección de imágenes por API** — endpoint con JWT en lugar de static directo
 
 ---
 
@@ -310,5 +328,5 @@ Acceso separado de usuarios normales — tabla `sys_operators`.
 - CORS configurado solo para `http://localhost:3000` (desarrollo)
 - `express.static` bloquea directory listing — no se puede listar `/uploads/`
 - Multer valida tipo MIME (`image/*`) y tamaño (5 MB máx)
-- DELETE verifica `usuario_id` del JWT antes de borrar (no se puede borrar artículos ajenos)
-- Para producción: cambiar JWT_SECRET, DB_PASSWORD, configurar HTTPS y protección de imágenes por API
+- DELETE verifica `usuario_id` del JWT antes de borrar
+- Para producción: cambiar JWT_SECRET, DB_PASSWORD, configurar HTTPS
