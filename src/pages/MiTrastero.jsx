@@ -522,7 +522,7 @@ function TrasteroCard({ task, onDelete, onOpen, onEdit, theme }) {
   return (
     <CardWrapper bg={bg} accent={acc} onClick={() => onOpen(task)}>
       {/* ── Grid de imágenes con overlay hover ── */}
-      <div style={{ position: 'relative', borderBottom: '2px solid rgb(247, 247, 251)' }}>
+      <div style={{ position: 'relative' }}>
         <AdaptiveGrid ruta={task.Ruta} imgs={[task.Imagen1, task.Imagen2, task.Imagen3, task.Imagen4]} width="100%" />
         <CardActions className="card-actions">
           <ActionBtn accent={acc} onClick={e => { e.stopPropagation(); onEdit(task); }}>
