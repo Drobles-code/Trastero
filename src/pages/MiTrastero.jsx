@@ -6,7 +6,6 @@ import '../components/Formularios/Cargarimg/Cargaimg.css';
 import ModalSubir from '../components/Modal/ModalSubir';
 import ModalEditar from '../components/Modal/ModalEditar';
 import { formatExtra } from '../constants/categorias';
-import { AdaptiveGrid } from '../components/Formularios/Cargarimg/Cargaimg';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -156,7 +155,7 @@ const FlatImg = styled.img`
 `;
 
 const FlatInfo = styled.div`
-  padding: 10px 12px 12px;
+  padding: 10px 12px ;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -507,6 +506,46 @@ const LightboxDot = styled.div`
   background: ${p => p.active ? '#fff' : 'rgba(255,255,255,0.35)'};
   transition: background 0.2s; cursor: pointer;
 `;
+
+/* ─── Grid de imágenes (independiente de Cargaimg) ────────── */
+
+const IMG_BASE_CARD = { objectFit: 'cover' };
+const GRID_STYLE_CARD = { display: 'grid', gridTemplateColumns: '1fr 1fr' };
+
+function AdaptiveGrid({ ruta, imgs, width }) {
+  const gridStyle = width ? { ...GRID_STYLE_CARD, width } : GRID_STYLE_CARD;
+  const srcs = imgs.filter(Boolean).map(name => `${ruta}/${name}`);
+  const n = srcs.length;
+  if (n === 0) return null;
+  if (n === 1) return (
+    <div style={gridStyle}>
+      <img src={srcs[0]} alt="" loading="lazy"
+        style={{ ...IMG_BASE_CARD, gridColumn: '1/3', gridRow: '1/3', width: '100%', height: '168px', borderRadius: '0 0 8px 8px' }} />
+    </div>
+  );
+  if (n === 2) return (
+    <div style={gridStyle}>
+      <img src={srcs[0]} alt="" loading="lazy" style={{ ...IMG_BASE_CARD, gridColumn: '1/2', gridRow: '1/3', width: '100%', height: '168px', borderRadius: '0 0 0 8px' }} />
+      <img src={srcs[1]} alt="" loading="lazy" style={{ ...IMG_BASE_CARD, gridColumn: '2/3', gridRow: '1/3', width: '100%', height: '168px', borderRadius: '0 0 8px 0' }} />
+    </div>
+  );
+  if (n === 3) return (
+    <div style={gridStyle}>
+      <img src={srcs[0]} alt="" loading="lazy" style={{ ...IMG_BASE_CARD, width: '100%', height: '84px' }} />
+      <img src={srcs[1]} alt="" loading="lazy" style={{ ...IMG_BASE_CARD, width: '100%', height: '84px' }} />
+      <img src={srcs[2]} alt="" loading="lazy"
+        style={{ ...IMG_BASE_CARD, gridColumn: '1/3', width: '100%', height: '84px', borderRadius: '0 0 8px 8px' }} />
+    </div>
+  );
+  return (
+    <div style={gridStyle}>
+      <img src={srcs[0]} alt="" loading="lazy" style={{ ...IMG_BASE_CARD, width: '100%', height: '84px' }} />
+      <img src={srcs[1]} alt="" loading="lazy" style={{ ...IMG_BASE_CARD, width: '100%', height: '84px' }} />
+      <img src={srcs[2]} alt="" loading="lazy" style={{ ...IMG_BASE_CARD, width: '100%', height: '84px', borderRadius: '0 0 0 8px' }} />
+      <img src={srcs[3]} alt="" loading="lazy" style={{ ...IMG_BASE_CARD, width: '100%', height: '84px', borderRadius: '0 0 8px 0' }} />
+    </div>
+  );
+}
 
 /* ─── Tarjeta ─────────────────────────────────────────────── */
 

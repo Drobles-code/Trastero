@@ -1,7 +1,7 @@
 # 📦 Trastero — Estado del Proyecto
 
 > 📌 **Este archivo está en git** — sin credenciales. Las contraseñas van solo en `server/.env` (no subir).
-> Última actualización: 2026-04-07
+> Última actualización: 2026-04-08
 
 ---
 
@@ -241,7 +241,7 @@ Trastero/
 │   │       ├── Header/Navbar.jsx      ← nav, modal auth, chip usuario
 │   │       ├── Principal/Principal.js ← galería principal
 │   │       ├── Cargarimg/
-│   │       │   ├── Cargaimg.js        ← AdaptiveGrid (export) + Cargaimg class
+│   │       │   ├── Cargaimg.js        ← AdaptiveGrid (privado) + Cargaimg class (página pública)
 │   │       │   └── Cargaimg.css       ← estilos: location-listing, titulo-tras, item
 │   │       └── De/De.js               ← vista detalle con grid centrado
 │   └── pages/
@@ -298,7 +298,7 @@ Trastero/
   - [x] Lightbox con navegación teclado (←→ Esc) y puntos indicadores
   - [x] Hover overlay con botones Editar / Eliminar sobre la zona de imágenes
   - [x] CardWrapper con borde blanco, border-radius, overflow:hidden
-- [x] **AdaptiveGrid** (`Cargaimg.js`) — grid adaptativo a 1/2/3/4 imágenes, prop `width` opcional
+- [x] **AdaptiveGrid** — grid adaptativo 1/2/3/4 imágenes; versión independiente en `MiTrastero.jsx` (sin bordes) y versión original en `Cargaimg.js` (con bordes) — ambas desacopladas
 - [x] **ModalSubir** — crear artículo: nombre, categoría, subcategoría, descripción, precio, negociable, acepta cambio, extras dinámicos, hasta 4 imágenes con preview
 - [x] **ModalEditar** — editar artículo: pre-rellena todos los campos, manejo de slots (existente/nueva/vacío), no cierra al hacer clic fuera, ancho 720px responsive
 - [x] **Sistema slots_info** — PUT envía FormData con `slots_info` JSON: el servidor procesa cada posición de imagen de forma independiente (no borra todo y reinsertar)
