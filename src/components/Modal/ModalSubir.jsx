@@ -80,16 +80,17 @@ const ToggleRow = styled.div`
 `;
 const TogglePill = styled.label`
   display: flex; align-items: center; gap: 8px; cursor: pointer;
-  background: ${p => p.checked ? p.accent + '22' : 'transparent'};
+  background: ${p => p.checked ? p.accent : p.accent + '22'};
   border: 1px solid ${p => p.checked ? p.accent : p.accent + '44'};
   border-radius: 20px; padding: 6px 14px; transition: all 0.2s;
-  color: ${p => p.color}; font-size: 13px; font-weight: 500; user-select: none;
+  color: ${p => p.checked ? '#fff' : p.accent};
+  font-size: 13px; font-weight: 600; user-select: none;
   input { display: none; }
-  &:hover { border-color: ${p => p.accent}; }
+  &:hover { background: ${p => p.checked ? p.accent : p.accent + '33'}; border-color: ${p => p.accent}; }
 `;
 const Dot = styled.span`
-  width: 10px; height: 10px; border-radius: 50%;
-  background: ${p => p.checked ? p.accent : p.color + '44'};
+  width: 8px; height: 8px; border-radius: 50%;
+  background: ${p => p.checked ? '#fff' : p.accent};
   transition: background 0.2s;
 `;
 const ExtraGrid = styled.div`
@@ -150,7 +151,7 @@ const PublishBtn = styled.button`
 `;
 const Divider = styled.hr`border: none; border-top: 1px solid ${p => p.accent}22; margin: 2px 0;`;
 
-function ModalSubir({ isOpen, onClose, onPublicado }) {
+function ModalSubir({ isOpen, onClose, onPublicado, trasteroId }) {
   const { theme } = useContext(ThemeContext);
   const bg  = theme.modalBg || '#1a1a1a';
   const acc = theme.accent;
@@ -218,6 +219,7 @@ function ModalSubir({ isOpen, onClose, onPublicado }) {
     setCargando(true); setError('');
 
     const formData = new FormData();
+    formData.append('trastero_id',  trasteroId);
     formData.append('nombre',       nombre.trim());
     formData.append('categoria',    categoria);
     formData.append('subcategoria', subcategoria);

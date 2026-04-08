@@ -28,7 +28,21 @@ const upload = multer({
   },
 });
 
-// ── Helper ────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────
+
+// Reconstruye el objeto Extras desde columnas tipadas
+function buildExtras(row) {
+  const extras = {};
+  if (row.km           != null) extras.km           = row.km;
+  if (row.anio         != null) extras.anio         = row.anio;
+  if (row.combustible  != null) extras.combustible  = row.combustible;
+  if (row.cv           != null) extras.cv           = row.cv;
+  if (row.metros       != null) extras.metros       = row.metros;
+  if (row.habitaciones != null) extras.habitaciones = row.habitaciones;
+  if (row.banos        != null) extras.banos        = row.banos;
+  return extras;
+}
+
 function formatearTrastero(row) {
   const imgs   = row.imagenes || [];
   const getImg = (pos) => imgs.find(i => i.posicion === pos)?.ruta || '';
@@ -37,14 +51,15 @@ function formatearTrastero(row) {
 
   return {
     id:           row.id,
+    trastero_id:  row.trastero_id,
     Nombre:       row.nombre,
-    Categoria:    row.categoria    || '',
-    Subcategoria: row.subcategoria || '',
-    Descripcion:  row.descripcion  || '',
-    Precio:       row.precio       !== null && row.precio !== undefined ? parseFloat(row.precio) : null,
-    Negociable:   row.negociable   || false,
+    Categoria:    row.categoria     || '',
+    Subcategoria: row.subcategoria  || '',
+    Descripcion:  row.descripcion   || '',
+    Precio:       row.precio !== null && row.precio !== undefined ? parseFloat(row.precio) : null,
+    Negociable:   row.negociable    || false,
     AceptaCambio: row.acepta_cambio || false,
-    Extras:       row.extras       || {},
+    Extras:       buildExtras(row),
     Ruta:    sepIdx >= 0 ? img1.substring(0, sepIdx) : '',
     Imagen1: img1.substring(sepIdx + 1),
     Imagen2: getImg(2).split('/').pop(),
@@ -53,12 +68,37 @@ function formatearTrastero(row) {
   };
 }
 
-const EXTRAS_KEYS = ['km', 'anio', 'combustible', 'cv', 'metros', 'habitaciones', 'banos'];
+// Extrae valores tipados del body para las columnas de extras
 function parseExtras(body) {
-  const extras = {};
-  EXTRAS_KEYS.forEach(k => { if (body[k] !== undefined && body[k] !== '') extras[k] = body[k]; });
-  return extras;
+  const toInt   = v => (v !== undefined && v !== '') ? parseInt(v,  10) : null;
+  const toFloat = v => (v !== undefined && v !== '') ? parseFloat(v)    : null;
+  const toStr   = v => (v !== undefined && v !== '') ? String(v)        : null;
+  return {
+    km:           toInt(body.km),
+    anio:         toInt(body.anio),
+    combustible:  toStr(body.combustible),
+    cv:           toInt(body.cv),
+    metros:       toFloat(body.metros),
+    habitaciones: toInt(body.habitaciones),
+    banos:        toInt(body.banos),
+  };
 }
+
+// SELECT canónico: une imagenes_detalle → trasteros → imagenes
+// Devuelve el mismo shape que formatearTrastero espera
+const SELECT_ARTICULO = `
+  SELECT
+    d.id, d.trastero_id, d.nombre, d.categoria, d.subcategoria, d.descripcion,
+    d.precio, d.negociable, d.acepta_cambio,
+    d.km, d.anio, d.combustible, d.cv, d.metros, d.habitaciones, d.banos,
+    json_agg(
+      json_build_object('posicion', i.posicion, 'ruta', i.ruta)
+      ORDER BY i.posicion
+    ) FILTER (WHERE i.id IS NOT NULL) AS imagenes
+  FROM imagenes_detalle d
+  JOIN trasteros t ON t.id = d.trastero_id
+  LEFT JOIN imagenes i ON i.imagenes_detalle_id = d.id
+`;
 
 // ── GET /api/trasteros?q=termino&usuario_id=X ─────────────────
 router.get('/', async (req, res) => {
@@ -69,7 +109,7 @@ router.get('/', async (req, res) => {
 
     if (q && q.trim()) {
       params.push(`%${q.trim()}%`);
-      conditions.push(`LOWER(t.nombre) LIKE LOWER($${params.length})`);
+      conditions.push(`(LOWER(d.nombre) LIKE LOWER($${params.length}) OR LOWER(d.descripcion) LIKE LOWER($${params.length}))`);
     }
 
     if (usuario_id) {
@@ -78,21 +118,10 @@ router.get('/', async (req, res) => {
     }
 
     const where  = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
-
-    const result = await pool.query(`
-      SELECT
-        t.id, t.nombre, t.categoria, t.subcategoria, t.descripcion,
-        t.precio, t.negociable, t.acepta_cambio, t.extras,
-        json_agg(
-          json_build_object('posicion', i.posicion, 'ruta', i.ruta)
-          ORDER BY i.posicion
-        ) AS imagenes
-      FROM trasteros t
-      LEFT JOIN imagenes i ON i.trastero_id = t.id
-      ${where}
-      GROUP BY t.id
-      ORDER BY t.id
-    `, params);
+    const result = await pool.query(
+      `${SELECT_ARTICULO} ${where} GROUP BY d.id ORDER BY d.id`,
+      params
+    );
 
     res.json(result.rows.map(formatearTrastero));
   } catch (err) {
@@ -101,34 +130,41 @@ router.get('/', async (req, res) => {
   }
 });
 
+// ── GET /api/trasteros/contenedor?usuario_id=X ───────────────
+// Devuelve los trasteros-contenedor del usuario (espacios físicos)
+router.get('/contenedor', authMiddleware, async (req, res) => {
+  try {
+    const { usuario_id } = req.query;
+    const uid = parseInt(usuario_id) || req.usuario.id;
+    // Sólo puede ver sus propios contenedores
+    if (uid !== req.usuario.id) return res.status(403).json({ error: 'Sin permiso' });
+    const result = await pool.query(
+      'SELECT id, nombre, ubicacion FROM trasteros WHERE usuario_id=$1 ORDER BY id',
+      [uid]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error en GET /api/trasteros/contenedor:', err);
+    res.status(500).json({ error: 'Error al obtener contenedores' });
+  }
+});
+
 // ── GET /api/trasteros/:nombre ────────────────────────────────
 router.get('/:nombre', async (req, res) => {
   try {
-    const { nombre } = req.params;
-
     const result = await pool.query(
-      `SELECT
-        t.id, t.nombre, t.categoria, t.subcategoria, t.descripcion,
-        t.precio, t.negociable, t.acepta_cambio, t.extras,
-        json_agg(
-          json_build_object('posicion', i.posicion, 'ruta', i.ruta)
-          ORDER BY i.posicion
-        ) AS imagenes
-      FROM trasteros t
-      LEFT JOIN imagenes i ON i.trastero_id = t.id
-      WHERE LOWER(t.nombre) = LOWER($1)
-      GROUP BY t.id`,
-      [nombre]
+      `${SELECT_ARTICULO} WHERE LOWER(d.nombre) = LOWER($1) GROUP BY d.id`,
+      [req.params.nombre]
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Trastero no encontrado' });
+      return res.status(404).json({ error: 'Artículo no encontrado' });
     }
 
     res.json(formatearTrastero(result.rows[0]));
   } catch (err) {
     console.error('Error en GET /api/trasteros/:nombre:', err);
-    res.status(500).json({ error: 'Error al obtener el trastero' });
+    res.status(500).json({ error: 'Error al obtener el artículo' });
   }
 });
 
@@ -139,7 +175,7 @@ router.post('/', authMiddleware, (req, res, next) => {
     next();
   });
 }, async (req, res) => {
-  const { nombre, categoria, subcategoria, descripcion, precio, negociable, acepta_cambio } = req.body;
+  const { nombre, trastero_id, categoria, subcategoria, descripcion, precio, negociable, acepta_cambio } = req.body;
 
   if (!nombre || !nombre.trim()) {
     return res.status(400).json({ error: 'El nombre del artículo es obligatorio' });
@@ -148,41 +184,76 @@ router.post('/', authMiddleware, (req, res, next) => {
     return res.status(400).json({ error: 'Sube al menos una imagen' });
   }
 
-  const API_URL    = process.env.API_URL || 'http://localhost:5000';
-  const extrasObj  = parseExtras(req.body);
-  const precioVal  = precio && precio !== '' ? parseFloat(precio) : null;
-  const negVal     = negociable    === 'true';
-  const cambioVal  = acepta_cambio === 'true';
+  // Obtener el trastero-contenedor del usuario:
+  // si viene trastero_id lo validamos, si no buscamos el primero o lo creamos
+  let contenedorId = parseInt(trastero_id);
+  try {
+    if (!contenedorId || isNaN(contenedorId)) {
+      // Buscar el primer trastero del usuario
+      const found = await pool.query(
+        'SELECT id FROM trasteros WHERE usuario_id=$1 ORDER BY id LIMIT 1',
+        [req.usuario.id]
+      );
+      if (found.rows.length > 0) {
+        contenedorId = found.rows[0].id;
+      } else {
+        // Crear uno por defecto
+        const created = await pool.query(
+          'INSERT INTO trasteros (usuario_id, nombre) VALUES ($1,$2) RETURNING id',
+          [req.usuario.id, 'Mi Trastero']
+        );
+        contenedorId = created.rows[0].id;
+      }
+    } else {
+      // Validar que el trastero_id pertenece al usuario
+      const tCheck = await pool.query(
+        'SELECT id FROM trasteros WHERE id=$1 AND usuario_id=$2',
+        [contenedorId, req.usuario.id]
+      );
+      if (tCheck.rows.length === 0) {
+        return res.status(403).json({ error: 'Trastero no válido o sin permiso' });
+      }
+    }
+  } catch (err) {
+    console.error('Error resolviendo trastero:', err);
+    return res.status(500).json({ error: 'Error al resolver el trastero' });
+  }
+
+  const API_URL   = process.env.API_URL || 'http://localhost:5000';
+  const extras    = parseExtras(req.body);
+  const precioVal = precio && precio !== '' ? parseFloat(precio) : null;
+  const negVal    = negociable    === 'true';
+  const cambioVal = acepta_cambio === 'true';
 
   try {
-    const trasteroRes = await pool.query(
-      `INSERT INTO trasteros
-         (nombre, usuario_id, categoria, subcategoria, descripcion, precio, negociable, acepta_cambio, extras)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
-      [nombre.trim(), req.usuario.id,
+    const artRes = await pool.query(
+      `INSERT INTO imagenes_detalle
+         (trastero_id, nombre, categoria, subcategoria, descripcion,
+          precio, negociable, acepta_cambio,
+          km, anio, combustible, cv, metros, habitaciones, banos)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+       RETURNING id`,
+      [contenedorId, nombre.trim(),
        categoria || null, subcategoria || null, descripcion || null,
-       precioVal, negVal, cambioVal, JSON.stringify(extrasObj)]
+       precioVal, negVal, cambioVal,
+       extras.km, extras.anio, extras.combustible, extras.cv,
+       extras.metros, extras.habitaciones, extras.banos]
     );
-    const trasteroId = trasteroRes.rows[0].id;
+    const artId = artRes.rows[0].id;
 
     for (let i = 0; i < req.files.length; i++) {
       const file = req.files[i];
       const ruta = `${API_URL}/uploads/${req.usuario.id}/${file.filename}`;
       await pool.query(
-        'INSERT INTO imagenes (trastero_id, posicion, ruta) VALUES ($1, $2, $3)',
-        [trasteroId, i + 1, ruta]
+        'INSERT INTO imagenes (imagenes_detalle_id, trastero_id, posicion, ruta) VALUES ($1,$2,$3,$4)',
+        [artId, contenedorId, i + 1, ruta]
       );
     }
 
-    const creado = await pool.query(`
-      SELECT t.id, t.nombre, t.categoria, t.subcategoria, t.descripcion,
-             t.precio, t.negociable, t.acepta_cambio, t.extras,
-        json_agg(json_build_object('posicion', i.posicion, 'ruta', i.ruta) ORDER BY i.posicion) AS imagenes
-      FROM trasteros t
-      LEFT JOIN imagenes i ON i.trastero_id = t.id
-      WHERE t.id = $1
-      GROUP BY t.id
-    `, [trasteroId]);
+    const creado = await pool.query(
+      `${SELECT_ARTICULO} WHERE d.id = $1 GROUP BY d.id`,
+      [artId]
+    );
 
     res.status(201).json(formatearTrastero(creado.rows[0]));
   } catch (err) {
@@ -206,79 +277,92 @@ router.put('/:id', authMiddleware, (req, res, next) => {
     return res.status(400).json({ error: 'El nombre del artículo es obligatorio' });
   }
 
-  const extrasObj = parseExtras(req.body);
-  const precioVal = precio && precio !== '' ? parseFloat(precio) : null;
-  const negVal    = negociable    === 'true' || negociable    === true;
-  const cambioVal = acepta_cambio === 'true' || acepta_cambio === true;
-
   try {
-    const trastero = await pool.query(
-      'SELECT id, usuario_id FROM trasteros WHERE id = $1',
-      [id]
+    // Ownership check a través del JOIN
+    const artRow = await pool.query(
+      `SELECT d.id, d.trastero_id FROM imagenes_detalle d
+       JOIN trasteros t ON t.id = d.trastero_id
+       WHERE d.id = $1 AND t.usuario_id = $2`,
+      [id, req.usuario.id]
     );
-    if (trastero.rows.length === 0) return res.status(404).json({ error: 'Artículo no encontrado' });
-    if (trastero.rows[0].usuario_id !== req.usuario.id) {
-      return res.status(403).json({ error: 'Sin permiso para editar este artículo' });
+    if (artRow.rows.length === 0) {
+      return res.status(404).json({ error: 'Artículo no encontrado o sin permiso' });
     }
+    const trasteroId = artRow.rows[0].trastero_id;
+
+    const extras    = parseExtras(req.body);
+    const precioVal = precio && precio !== '' ? parseFloat(precio) : null;
+    const negVal    = negociable    === 'true' || negociable    === true;
+    const cambioVal = acepta_cambio === 'true' || acepta_cambio === true;
 
     await pool.query(
-      `UPDATE trasteros
+      `UPDATE imagenes_detalle
        SET nombre=$1, categoria=$2, subcategoria=$3, descripcion=$4,
-           precio=$5, negociable=$6, acepta_cambio=$7, extras=$8
-       WHERE id=$9`,
+           precio=$5, negociable=$6, acepta_cambio=$7,
+           km=$8, anio=$9, combustible=$10, cv=$11,
+           metros=$12, habitaciones=$13, banos=$14,
+           updated_at=NOW()
+       WHERE id=$15`,
       [nombre.trim(), categoria || null, subcategoria || null, descripcion || null,
-       precioVal, negVal, cambioVal, JSON.stringify(extrasObj), id]
+       precioVal, negVal, cambioVal,
+       extras.km, extras.anio, extras.combustible, extras.cv,
+       extras.metros, extras.habitaciones, extras.banos,
+       id]
     );
 
-    // Procesar slots individualmente para no borrar imágenes existentes
+    // Procesar slots individualmente
     const API_URL   = process.env.API_URL || 'http://localhost:5000';
     const slotsInfo = JSON.parse(req.body.slots_info || '["existente","existente","existente","existente"]');
     let   fileIdx   = 0;
 
     for (let i = 0; i < 4; i++) {
-      const estado = slotsInfo[i]; // 'existente' | 'nueva' | 'vacio'
+      const estado = slotsInfo[i];
       const pos    = i + 1;
 
       if (estado === 'vacio') {
-        // Borrar la imagen de esa posición si existía
-        const row = await pool.query('SELECT ruta FROM imagenes WHERE trastero_id=$1 AND posicion=$2', [id, pos]);
+        const row = await pool.query(
+          'SELECT ruta FROM imagenes WHERE imagenes_detalle_id=$1 AND posicion=$2', [id, pos]
+        );
         if (row.rows.length > 0) {
           try {
             const url = new URL(row.rows[0].ruta);
             const fp  = path.join(__dirname, '../public', url.pathname);
             if (fs.existsSync(fp)) fs.unlinkSync(fp);
           } catch {}
-          await pool.query('DELETE FROM imagenes WHERE trastero_id=$1 AND posicion=$2', [id, pos]);
+          await pool.query(
+            'DELETE FROM imagenes WHERE imagenes_detalle_id=$1 AND posicion=$2', [id, pos]
+          );
         }
       } else if (estado === 'nueva' && req.files[fileIdx]) {
-        // Reemplazar o insertar imagen nueva en esta posición
         const file = req.files[fileIdx++];
         const ruta = `${API_URL}/uploads/${req.usuario.id}/${file.filename}`;
-        // Borrar archivo anterior si existía
-        const row = await pool.query('SELECT ruta FROM imagenes WHERE trastero_id=$1 AND posicion=$2', [id, pos]);
+        const row  = await pool.query(
+          'SELECT ruta FROM imagenes WHERE imagenes_detalle_id=$1 AND posicion=$2', [id, pos]
+        );
         if (row.rows.length > 0) {
           try {
             const url = new URL(row.rows[0].ruta);
             const fp  = path.join(__dirname, '../public', url.pathname);
             if (fs.existsSync(fp)) fs.unlinkSync(fp);
           } catch {}
-          await pool.query('UPDATE imagenes SET ruta=$1 WHERE trastero_id=$2 AND posicion=$3', [ruta, id, pos]);
+          await pool.query(
+            'UPDATE imagenes SET ruta=$1 WHERE imagenes_detalle_id=$2 AND posicion=$3',
+            [ruta, id, pos]
+          );
         } else {
-          await pool.query('INSERT INTO imagenes (trastero_id, posicion, ruta) VALUES ($1,$2,$3)', [id, pos, ruta]);
+          await pool.query(
+            'INSERT INTO imagenes (imagenes_detalle_id, trastero_id, posicion, ruta) VALUES ($1,$2,$3,$4)',
+            [id, trasteroId, pos, ruta]
+          );
         }
       }
-      // 'existente' → no hacer nada, la imagen ya está en DB
+      // 'existente' → no hacer nada
     }
 
-    const actualizado = await pool.query(`
-      SELECT t.id, t.nombre, t.categoria, t.subcategoria, t.descripcion,
-             t.precio, t.negociable, t.acepta_cambio, t.extras,
-        json_agg(json_build_object('posicion', i.posicion, 'ruta', i.ruta) ORDER BY i.posicion) AS imagenes
-      FROM trasteros t
-      LEFT JOIN imagenes i ON i.trastero_id = t.id
-      WHERE t.id = $1
-      GROUP BY t.id
-    `, [id]);
+    const actualizado = await pool.query(
+      `${SELECT_ARTICULO} WHERE d.id = $1 GROUP BY d.id`,
+      [id]
+    );
 
     res.json(formatearTrastero(actualizado.rows[0]));
   } catch (err) {
@@ -296,17 +380,17 @@ router.delete('/:id/imagenes/:posicion', authMiddleware, async (req, res) => {
   }
 
   try {
-    const trastero = await pool.query(
-      'SELECT id, usuario_id FROM trasteros WHERE id = $1', [id]
+    const artRow = await pool.query(
+      `SELECT d.id FROM imagenes_detalle d
+       JOIN trasteros t ON t.id = d.trastero_id
+       WHERE d.id = $1 AND t.usuario_id = $2`,
+      [id, req.usuario.id]
     );
-    if (trastero.rows.length === 0) return res.status(404).json({ error: 'Artículo no encontrado' });
-    if (trastero.rows[0].usuario_id !== req.usuario.id) {
-      return res.status(403).json({ error: 'Sin permiso' });
-    }
+    if (artRow.rows.length === 0) return res.status(404).json({ error: 'Artículo no encontrado o sin permiso' });
 
     // Borrar fichero del disco
     const imgRow = await pool.query(
-      'SELECT ruta FROM imagenes WHERE trastero_id = $1 AND posicion = $2', [id, pos]
+      'SELECT ruta FROM imagenes WHERE imagenes_detalle_id=$1 AND posicion=$2', [id, pos]
     );
     if (imgRow.rows.length === 0) return res.status(404).json({ error: 'Imagen no encontrada' });
     try {
@@ -315,30 +399,27 @@ router.delete('/:id/imagenes/:posicion', authMiddleware, async (req, res) => {
       if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     } catch {}
 
-    // Borrar la imagen y re-secuenciar las restantes
-    await pool.query('DELETE FROM imagenes WHERE trastero_id = $1 AND posicion = $2', [id, pos]);
     await pool.query(
-      'UPDATE imagenes SET posicion = posicion - 1 WHERE trastero_id = $1 AND posicion > $2',
+      'DELETE FROM imagenes WHERE imagenes_detalle_id=$1 AND posicion=$2', [id, pos]
+    );
+    await pool.query(
+      'UPDATE imagenes SET posicion = posicion - 1 WHERE imagenes_detalle_id=$1 AND posicion>$2',
       [id, pos]
     );
 
-    // ¿Quedan imágenes?
+    // ¿Quedan imágenes? Si no, borrar el artículo
     const remaining = await pool.query(
-      'SELECT COUNT(*) FROM imagenes WHERE trastero_id = $1', [id]
+      'SELECT COUNT(*) FROM imagenes WHERE imagenes_detalle_id=$1', [id]
     );
     if (parseInt(remaining.rows[0].count) === 0) {
-      await pool.query('DELETE FROM trasteros WHERE id = $1', [id]);
+      await pool.query('DELETE FROM imagenes_detalle WHERE id=$1', [id]);
       return res.json({ deleted: true, id });
     }
 
-    const actualizado = await pool.query(`
-      SELECT t.id, t.nombre,
-        json_agg(json_build_object('posicion', i.posicion, 'ruta', i.ruta) ORDER BY i.posicion) AS imagenes
-      FROM trasteros t
-      LEFT JOIN imagenes i ON i.trastero_id = t.id
-      WHERE t.id = $1
-      GROUP BY t.id
-    `, [id]);
+    const actualizado = await pool.query(
+      `${SELECT_ARTICULO} WHERE d.id = $1 GROUP BY d.id`,
+      [id]
+    );
 
     res.json(formatearTrastero(actualizado.rows[0]));
   } catch (err) {
@@ -353,20 +434,20 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
 
   try {
-    const trastero = await pool.query(
-      'SELECT id, usuario_id FROM trasteros WHERE id = $1',
-      [id]
+    const artRow = await pool.query(
+      `SELECT d.id FROM imagenes_detalle d
+       JOIN trasteros t ON t.id = d.trastero_id
+       WHERE d.id = $1 AND t.usuario_id = $2`,
+      [id, req.usuario.id]
     );
-
-    if (trastero.rows.length === 0) {
-      return res.status(404).json({ error: 'Artículo no encontrado' });
-    }
-    if (trastero.rows[0].usuario_id !== req.usuario.id) {
-      return res.status(403).json({ error: 'Sin permiso para eliminar este artículo' });
+    if (artRow.rows.length === 0) {
+      return res.status(404).json({ error: 'Artículo no encontrado o sin permiso' });
     }
 
     // Borrar ficheros del disco
-    const imagenes = await pool.query('SELECT ruta FROM imagenes WHERE trastero_id = $1', [id]);
+    const imagenes = await pool.query(
+      'SELECT ruta FROM imagenes WHERE imagenes_detalle_id=$1', [id]
+    );
     for (const img of imagenes.rows) {
       try {
         const url      = new URL(img.ruta);
@@ -375,8 +456,8 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       } catch {}
     }
 
-    await pool.query('DELETE FROM imagenes  WHERE trastero_id = $1', [id]);
-    await pool.query('DELETE FROM trasteros WHERE id = $1',          [id]);
+    // CASCADE borra imagenes al borrar imagenes_detalle
+    await pool.query('DELETE FROM imagenes_detalle WHERE id=$1', [id]);
 
     res.json({ ok: true });
   } catch (err) {

@@ -83,8 +83,9 @@ const HeaderRight = styled.div`
 `;
 
 const CountBadge = styled.div`
-  color: ${p => getContrastColor(p.bg)}88;
+  color: ${p => p.accent};
   font-size: 14px;
+  font-weight: 500;
 `;
 
 const AddBtn = styled.button`
@@ -155,10 +156,11 @@ const FlatImg = styled.img`
 `;
 
 const FlatInfo = styled.div`
-  padding: 10px 12px ;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
   gap: 4px;
+  border-top: 2px solid rgb(247, 247, 251);
 `;
 
 const FlatPrice = styled.div`
@@ -509,7 +511,7 @@ const LightboxDot = styled.div`
 
 /* ─── Grid de imágenes (independiente de Cargaimg) ────────── */
 
-const IMG_BASE_CARD = { objectFit: 'cover' };
+const IMG_BASE_CARD = { objectFit: 'cover', border: '2px solid rgb(247 247 251)' };
 const GRID_STYLE_CARD = { display: 'grid', gridTemplateColumns: '1fr 1fr' };
 
 function AdaptiveGrid({ ruta, imgs, width }) {
@@ -534,15 +536,15 @@ function AdaptiveGrid({ ruta, imgs, width }) {
       <img src={srcs[0]} alt="" loading="lazy" style={{ ...IMG_BASE_CARD, width: '100%', height: '84px' }} />
       <img src={srcs[1]} alt="" loading="lazy" style={{ ...IMG_BASE_CARD, width: '100%', height: '84px' }} />
       <img src={srcs[2]} alt="" loading="lazy"
-        style={{ ...IMG_BASE_CARD, gridColumn: '1/3', width: '100%', height: '84px', borderRadius: '0 0 8px 8px' }} />
+        style={{ ...IMG_BASE_CARD, gridColumn: '1/3', width: '100%', height: '84px', marginTop: '-4px', borderRadius: '0 0 8px 8px' }} />
     </div>
   );
   return (
     <div style={gridStyle}>
       <img src={srcs[0]} alt="" loading="lazy" style={{ ...IMG_BASE_CARD, width: '100%', height: '84px' }} />
       <img src={srcs[1]} alt="" loading="lazy" style={{ ...IMG_BASE_CARD, width: '100%', height: '84px' }} />
-      <img src={srcs[2]} alt="" loading="lazy" style={{ ...IMG_BASE_CARD, width: '100%', height: '84px', borderRadius: '0 0 0 8px' }} />
-      <img src={srcs[3]} alt="" loading="lazy" style={{ ...IMG_BASE_CARD, width: '100%', height: '84px', borderRadius: '0 0 8px 0' }} />
+      <img src={srcs[2]} alt="" loading="lazy" style={{ ...IMG_BASE_CARD, width: '100%', height: '84px', marginTop: '-4px', borderRadius: '0 0 0 8px' }} />
+      <img src={srcs[3]} alt="" loading="lazy" style={{ ...IMG_BASE_CARD, width: '100%', height: '84px', marginTop: '-4px', borderRadius: '0 0 8px 0' }} />
     </div>
   );
 }
@@ -598,11 +600,12 @@ function MiTrastero({ user }) {
   const bg  = theme.modalBg;
   const acc = theme.accent;
 
-  const [trasteros,  setTrasteros]  = useState([]);
-  const [cargando,   setCargando]   = useState(true);
-  const [confirmar,  setConfirmar]  = useState(null);
-  const [detalle,    setDetalle]    = useState(null);
-  const [showSubir,  setShowSubir]  = useState(false);
+  const [trasteros,    setTrasteros]    = useState([]);
+  const [trasteroId,   setTrasteroId]   = useState(null); // id del contenedor activo
+  const [cargando,     setCargando]     = useState(true);
+  const [confirmar,    setConfirmar]    = useState(null);
+  const [detalle,      setDetalle]      = useState(null);
+  const [showSubir,    setShowSubir]    = useState(false);
   const [vistaPlana,      setVistaPlana]      = useState(false);
   const [editar,          setEditar]          = useState(null);
   const [confirmarImagen, setConfirmarImagen] = useState(null); // { task, posicion }
@@ -622,6 +625,14 @@ function MiTrastero({ user }) {
   useEffect(() => {
     if (!user) return;
     setCargando(true);
+    // Cargar el contenedor (trastero) del usuario para obtener su id
+    fetch(`${API_URL}/api/trasteros/contenedor?usuario_id=${user.id}`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('trastero_token')}` },
+    })
+      .then(r => r.ok ? r.json() : [])
+      .then(data => { if (data.length > 0) setTrasteroId(data[0].id); })
+      .catch(() => {});
+    // Cargar artículos del usuario
     fetch(`${API_URL}/api/trasteros?usuario_id=${user.id}`)
       .then(r => r.ok ? r.json() : [])
       .then(data => setTrasteros(data))
@@ -631,7 +642,7 @@ function MiTrastero({ user }) {
 
   if (!user) {
     return (
-      <PageWrapper>
+      <PageWrapper bg={theme.background || '#000000'}>
         <ProtectedScreen>
           <div style={{ fontSize: 56 }}>🔒</div>
           <h2 style={{ color: getContrastColor(theme.background), margin: 0 }}>Acceso restringido</h2>
@@ -674,13 +685,14 @@ function MiTrastero({ user }) {
   };
 
   return (
-    <PageWrapper>
+    <PageWrapper bg={theme.background || '#000000'}>
 
       {/* ── Modal subir artículo ── */}
       <ModalSubir
         isOpen={showSubir}
         onClose={() => setShowSubir(false)}
         onPublicado={nuevo => setTrasteros(prev => [...prev, nuevo])}
+        trasteroId={trasteroId}
       />
 
       {/* ── Modal editar artículo ── */}
@@ -818,7 +830,7 @@ function MiTrastero({ user }) {
         </UserInfo>
         <HeaderRight>
           {!cargando && (
-            <CountBadge bg={bg}>
+            <CountBadge bg={bg} accent={acc}>
               📦 {trasteros.length} {trasteros.length === 1 ? 'artículo' : 'artículos'}
             </CountBadge>
           )}

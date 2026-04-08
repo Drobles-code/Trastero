@@ -87,6 +87,13 @@ router.post('/registro', async (req, res) => {
     );
 
     const usuario = result.rows[0];
+
+    // Crear trastero por defecto para el nuevo usuario
+    await pool.query(
+      'INSERT INTO trasteros (usuario_id, nombre) VALUES ($1, $2)',
+      [usuario.id, 'Mi Trastero']
+    );
+
     const token = jwt.sign(
       { id: usuario.id, email: usuario.email },
       JWT_SECRET,

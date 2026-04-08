@@ -1,5 +1,5 @@
 -- ============================================================
--- Trastero — Esquema PostgreSQL
+-- Trastero — Esquema PostgreSQL v2
 -- Ejecutar: psql -d trastero -f database/schema.sql
 -- ============================================================
 
@@ -14,39 +14,49 @@ CREATE TABLE IF NOT EXISTS usuarios (
   updated_at  TIMESTAMP DEFAULT NOW()
 );
 
--- Trasteros (unidades de almacenamiento)
+-- Trasteros — espacios físicos (garaje, tienda, local...)
+-- Un usuario puede tener varios trasteros
 CREATE TABLE IF NOT EXISTS trasteros (
+  id          SERIAL PRIMARY KEY,
+  usuario_id  INTEGER REFERENCES usuarios(id) ON DELETE CASCADE,
+  nombre      VARCHAR(255) NOT NULL,
+  ubicacion   VARCHAR(500),
+  created_at  TIMESTAMP DEFAULT NOW()
+);
+
+-- Imagenes_detalle — artículos dentro de un trastero
+-- Cada artículo pertenece a un trastero
+CREATE TABLE IF NOT EXISTS imagenes_detalle (
   id            SERIAL PRIMARY KEY,
+  trastero_id   INTEGER REFERENCES trasteros(id) ON DELETE CASCADE,
   nombre        VARCHAR(255) NOT NULL,
-  usuario_id    INTEGER REFERENCES usuarios(id) ON DELETE CASCADE,
   descripcion   TEXT,
   precio        DECIMAL(10,2),
+  negociable    BOOLEAN DEFAULT FALSE,
   acepta_cambio BOOLEAN DEFAULT FALSE,
+  categoria     VARCHAR(100),
+  subcategoria  VARCHAR(100),
+  -- extras como columnas tipadas (antes JSONB en trasteros)
+  km            INTEGER,
+  anio          INTEGER,
+  combustible   VARCHAR(50),
+  cv            INTEGER,
+  metros        DECIMAL(8,2),
+  habitaciones  INTEGER,
+  banos         INTEGER,
   created_at    TIMESTAMP DEFAULT NOW(),
   updated_at    TIMESTAMP DEFAULT NOW()
 );
 
--- Imágenes (4 por trastero, grid 2x2)
+-- Imagenes — fotos de un artículo
+-- FK doble: imagenes_detalle_id (principal) + trastero_id (directo, redundante)
 CREATE TABLE IF NOT EXISTS imagenes (
-  id          SERIAL PRIMARY KEY,
-  trastero_id INTEGER REFERENCES trasteros(id) ON DELETE CASCADE,
-  ruta        VARCHAR(500) NOT NULL,
-  posicion    INTEGER CHECK (posicion BETWEEN 1 AND 4),
-  created_at  TIMESTAMP DEFAULT NOW()
-);
-
--- Categorías
-CREATE TABLE IF NOT EXISTS categorias (
-  id          SERIAL PRIMARY KEY,
-  nombre      VARCHAR(100) UNIQUE NOT NULL,
-  descripcion TEXT
-);
-
--- Relación trastero ↔ categoría (muchos a muchos)
-CREATE TABLE IF NOT EXISTS trastero_categorias (
-  trastero_id  INTEGER REFERENCES trasteros(id) ON DELETE CASCADE,
-  categoria_id INTEGER REFERENCES categorias(id) ON DELETE CASCADE,
-  PRIMARY KEY (trastero_id, categoria_id)
+  id                  SERIAL PRIMARY KEY,
+  imagenes_detalle_id INTEGER REFERENCES imagenes_detalle(id) ON DELETE CASCADE,
+  trastero_id         INTEGER REFERENCES trasteros(id) ON DELETE CASCADE,
+  ruta                VARCHAR(500) NOT NULL,
+  posicion            INTEGER CHECK (posicion BETWEEN 1 AND 4),
+  created_at          TIMESTAMP DEFAULT NOW()
 );
 
 -- Preferencias de tema por usuario
@@ -73,7 +83,9 @@ CREATE TABLE IF NOT EXISTS sys_operators (
   last_login TIMESTAMP
 );
 
--- Índices para búsqueda rápida
-CREATE INDEX IF NOT EXISTS idx_trasteros_nombre ON trasteros (LOWER(nombre));
-CREATE INDEX IF NOT EXISTS idx_trasteros_usuario ON trasteros (usuario_id);
-CREATE INDEX IF NOT EXISTS idx_imagenes_trastero ON imagenes (trastero_id);
+-- Índices
+CREATE INDEX IF NOT EXISTS idx_trasteros_usuario      ON trasteros        (usuario_id);
+CREATE INDEX IF NOT EXISTS idx_imgdetalle_trastero    ON imagenes_detalle (trastero_id);
+CREATE INDEX IF NOT EXISTS idx_imgdetalle_nombre      ON imagenes_detalle (LOWER(nombre));
+CREATE INDEX IF NOT EXISTS idx_imagenes_detalle_id    ON imagenes         (imagenes_detalle_id);
+CREATE INDEX IF NOT EXISTS idx_imagenes_trastero      ON imagenes         (trastero_id);

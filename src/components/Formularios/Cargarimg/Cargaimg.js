@@ -45,7 +45,7 @@ function AdaptiveGrid({ ruta, imgs, width }) {
         <img src={srcs[0]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px' }} />
         <img src={srcs[1]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px' }} />
         <img src={srcs[2]} alt="" loading="lazy"
-          style={{ ...IMG_BASE, gridColumn: '1/3', width: '100%', height: '84px', borderRadius: '0 0 8px 8px' }} />
+          style={{ ...IMG_BASE, gridColumn: '1/3', width: '100%', height: '84px', marginTop: '-4px', borderRadius: '0 0 8px 8px' }} />
       </div>
     );
   }
