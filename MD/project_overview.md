@@ -1,0 +1,54 @@
+---
+name: project_overview
+description: Visión general del proyecto Trastero — stack, repo, carpetas, próximos pasos. Cargar siempre al inicio de conversación.
+type: project
+---
+
+# Proyecto Trastero
+
+App React + Node/Express + PostgreSQL para venta de artículos de segunda mano. Galería de imágenes, auth JWT, tema personalizable por usuario.
+
+**Versión:** 2.1.0 (en desarrollo)
+**Repo:** https://github.com/Drobles-code/Trastero.git
+**Rama principal:** main
+**App corre en:** `C:\Users\drobl\Desktop\CLAUDE\proyectos\Trastero`
+
+## Stack
+- **Frontend:** React 18.2.0, React Router DOM 6.15.0, Styled Components 6.0.0, CRA
+- **Backend:** Node.js + Express, PostgreSQL, Multer (img upload), JWT, Bcrypt
+- **BD:** PostgreSQL esquema v2 (ver `project_database.md`)
+
+## Estructura de carpetas
+```
+src/
+  constants/categorias.js        — árbol categorías + CAMPOS_EXTRA + formatExtra()
+  context/ThemeContext.js        — tema global (background, modalBg, accent, navbar, cardTitle)
+  components/Modal/
+    ModalSubir.jsx               — crear artículo
+    ModalEditar.jsx              — editar artículo
+  components/Formularios/
+    Cargarimg/Cargaimg.js        — tarjeta pública (página principal)
+    Principal/Principal.js       — grid página pública
+    De/De.js                     — detalle artículo
+  pages/MiTrastero.jsx           — área privada del usuario
+server/
+  server.js
+  routes/trasteros.js            — CRUD artículos
+  routes/auth.js                 — login + registro
+  middleware/authMiddleware.js
+database/
+  schema.sql                     — esquema v2
+  seed.sql                       — datos de prueba
+```
+
+## Estado (2026-04-09)
+- CRUD artículos completo, BD migrada a esquema v2
+- Campos tipados por categoría (Motor, Inmobiliaria)
+- Tema personalizable por usuario (ThemeContext + preferencias_usuario en BD)
+
+## Próximos pasos
+- Vista grupo/todo en página pública (Principal)
+- GIF thumbnails para carga más rápida
+- Filtro por descripción (backend listo, falta UI)
+- Responsive / mobile
+- Múltiples trasteros por usuario (selector en Mi Trastero)
