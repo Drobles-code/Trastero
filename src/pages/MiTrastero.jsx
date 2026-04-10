@@ -398,32 +398,34 @@ const DetailTitle = styled.h2`
 const IMG_BASE = { objectFit: 'cover', border: '2px solid rgb(247 247 251)' };
 const GRID2 = { display: 'grid', gridTemplateColumns: '1fr 1fr', borderRadius: 8, overflow: 'hidden' };
 
-function DetailGrid({ ruta, imgs }) {
+function DetailGrid({ ruta, imgs, onImgClick }) {
   const srcs = imgs.filter(Boolean).map(n => `${ruta}/${n}`);
   const n = srcs.length;
+  const click = (i, e) => { e.stopPropagation(); onImgClick?.(i); };
+  const imgStyle = (extra) => ({ ...IMG_BASE, cursor: onImgClick ? 'zoom-in' : 'default', ...extra });
   if (n === 0) return null;
   if (n === 1) return (
-    <img src={srcs[0]} alt="" style={{ ...IMG_BASE, width: '100%', height: 320, borderRadius: 8 }} />
+    <img src={srcs[0]} alt="" onClick={e => click(0, e)} style={imgStyle({ width: '100%', height: 320, borderRadius: 8 })} />
   );
   if (n === 2) return (
     <div style={GRID2}>
-      <img src={srcs[0]} alt="" style={{ ...IMG_BASE, width: '100%', height: 240 }} />
-      <img src={srcs[1]} alt="" style={{ ...IMG_BASE, width: '100%', height: 240 }} />
+      <img src={srcs[0]} alt="" onClick={e => click(0, e)} style={imgStyle({ width: '100%', height: 240 })} />
+      <img src={srcs[1]} alt="" onClick={e => click(1, e)} style={imgStyle({ width: '100%', height: 240 })} />
     </div>
   );
   if (n === 3) return (
     <div style={GRID2}>
-      <img src={srcs[0]} alt="" style={{ ...IMG_BASE, width: '100%', height: 160 }} />
-      <img src={srcs[1]} alt="" style={{ ...IMG_BASE, width: '100%', height: 160 }} />
-      <img src={srcs[2]} alt="" style={{ ...IMG_BASE, gridColumn: '1/3', width: '100%', height: 160 }} />
+      <img src={srcs[0]} alt="" onClick={e => click(0, e)} style={imgStyle({ width: '100%', height: 160 })} />
+      <img src={srcs[1]} alt="" onClick={e => click(1, e)} style={imgStyle({ width: '100%', height: 160 })} />
+      <img src={srcs[2]} alt="" onClick={e => click(2, e)} style={imgStyle({ gridColumn: '1/3', width: '100%', height: 160 })} />
     </div>
   );
   return (
     <div style={GRID2}>
-      <img src={srcs[0]} alt="" style={{ ...IMG_BASE, width: '100%', height: 160 }} />
-      <img src={srcs[1]} alt="" style={{ ...IMG_BASE, width: '100%', height: 160 }} />
-      <img src={srcs[2]} alt="" style={{ ...IMG_BASE, width: '100%', height: 160 }} />
-      <img src={srcs[3]} alt="" style={{ ...IMG_BASE, width: '100%', height: 160 }} />
+      <img src={srcs[0]} alt="" onClick={e => click(0, e)} style={imgStyle({ width: '100%', height: 160 })} />
+      <img src={srcs[1]} alt="" onClick={e => click(1, e)} style={imgStyle({ width: '100%', height: 160 })} />
+      <img src={srcs[2]} alt="" onClick={e => click(2, e)} style={imgStyle({ width: '100%', height: 160 })} />
+      <img src={srcs[3]} alt="" onClick={e => click(3, e)} style={imgStyle({ width: '100%', height: 160 })} />
     </div>
   );
 }
@@ -740,6 +742,11 @@ function MiTrastero({ user }) {
             <DetailGrid
               ruta={detalle.Ruta}
               imgs={[detalle.Imagen1, detalle.Imagen2, detalle.Imagen3, detalle.Imagen4]}
+              onImgClick={i => {
+                const allImgs = [detalle.Imagen1, detalle.Imagen2, detalle.Imagen3, detalle.Imagen4]
+                  .filter(Boolean).map(n => `${detalle.Ruta}/${n}`);
+                setLightbox({ imgs: allImgs, idx: i });
+              }}
             />
 
             <DetailActions>
