@@ -33,3 +33,6 @@ database/*.backup
 database/RESPALDO_*
 *.backup
 RESPALDO_*
+
+# excepcion: el backup principal SÍ va al repo
+!database/trastero_latest.sql
