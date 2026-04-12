@@ -41,6 +41,7 @@ database/
   seed.sql                       — datos de prueba
   backup_trastero_*.backup       — respaldos pg_dump (ignorados por git)
 SETUP.bat                        — configuración primer uso en PC nuevo
+actualizar.bat                   — git pull + npm install (para actualizar el proyecto)
 iniciar.bat                      — arrancar backend + frontend
 ```
 
@@ -51,6 +52,12 @@ iniciar.bat                      — arrancar backend + frontend
 - Lightbox conectado al modal de detalle en MiTrastero (click foto → galería fullscreen)
 - SETUP.bat para configurar el proyecto en un PC nuevo desde cero
 - server/.env excluido del repo (credenciales seguras, usar server/.env.example como plantilla)
+
+## Pendiente al actualizar
+> Revisar esta sección cada vez que hagas `actualizar.bat` en otro PC.
+> Cuando esté vacía, solo con `actualizar.bat` es suficiente.
+
+_(sin pendientes por ahora)_
 
 ## Próximos pasos
 - Categorías dinámicas desde BD (tabla `categorias`)
