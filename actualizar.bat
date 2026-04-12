@@ -13,14 +13,40 @@ set "ROOT=%~dp0"
 set "ROOT=%ROOT:~0,-1%"
 set "SERVER=%ROOT%\server"
 set "DATABASE=%ROOT%\database"
+set "GIT="
 set "PSQL="
+
+:: ─────────────────────────────────────────────
+::  Buscar Git
+:: ─────────────────────────────────────────────
+where git >nul 2>&1
+if %errorlevel%==0 (
+    set "GIT=git"
+    goto :GIT_FOUND
+)
+if exist "C:\Program Files\Git\cmd\git.exe" (
+    set "GIT=C:\Program Files\Git\cmd\git.exe"
+    goto :GIT_FOUND
+)
+if exist "C:\Program Files\Git\bin\git.exe" (
+    set "GIT=C:\Program Files\Git\bin\git.exe"
+    goto :GIT_FOUND
+)
+echo    [ERROR] Git no encontrado.
+echo    Instala Git desde https://git-scm.com y vuelve a intentarlo.
+pause
+exit /b 1
+
+:GIT_FOUND
+echo    [OK] Git encontrado.
 
 :: ─────────────────────────────────────────────
 ::  1. Git pull
 :: ─────────────────────────────────────────────
+echo.
 echo  [1/4] Descargando cambios del repositorio...
 cd /d "%ROOT%"
-git pull
+"!GIT!" pull
 if errorlevel 1 (
     echo    [ERROR] No se pudo actualizar. Verifica tu conexion o conflictos.
     pause
