@@ -36,6 +36,16 @@ Campos extra tipados (antes JSONB):
 ### preferencias_usuario
 `id, usuario_id UNIQUE, bg_color, text_color, accent_color, modal_color, card_title, navbar_color, updated_at`
 
+## Configuración de conexión
+- `server/.env` NO está en el repo (excluido por .gitignore)
+- Usar `server/.env.example` como plantilla
+- **CRÍTICO**: `DB_NAME=Trastero` (T mayúscula) — PostgreSQL es case-sensitive con nombres de BD
+- En PC nuevo: ejecutar `SETUP.bat` que crea el `.env` automáticamente
+
+## Respaldo
+- Generado con `pg_dump`: `PGPASSWORD=... "/c/Program Files/PostgreSQL/18/bin/pg_dump" -h localhost -p 5432 -U postgres -d Trastero -F c -f "database/backup_FECHA.backup"`
+- Los archivos `.backup` están en `database/` e ignorados por git
+
 ## Aplicar migraciones (pgAdmin Query Tool)
 > IMPORTANTE: pegar el SQL directamente — NO escribir la ruta del archivo (da error de sintaxis)
 

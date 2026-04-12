@@ -43,6 +43,19 @@ Ambas tienen el mismo border. La diferencia es que MiTrastero NO tiene `export` 
 - Fetcha `trasteroId` en `useEffect` → `GET /api/trasteros/contenedor` → pasa a `<ModalSubir>`
 - Vista grupo (defecto) + Vista plana (toggle)
 
+### Lightbox (galería fullscreen)
+- Estado: `const [lightbox, setLightbox] = useState(null); // { imgs: [], idx: 0 }`
+- Teclado: Escape cierra, ArrowLeft/ArrowRight navegan
+- JSX al final del return (z-index 3000)
+- **Conectado al modal de detalle**: click en foto de `DetailGrid` → abre lightbox
+
+### DetailGrid
+- Props: `{ ruta, imgs, onImgClick }`
+- `onImgClick(i)` — callback con índice de la foto clickada; si no se pasa, fotos son estáticas
+- Cursor `zoom-in` cuando `onImgClick` está presente
+- Layouts: 1 foto (320px full), 2 fotos (2 cols 240px), 3 fotos (2+1 span), 4 fotos (2×2)
+- Uso en modal de detalle: pasa handler que llama `setLightbox({ imgs: allImgs, idx: i })`
+
 ## Modales
 ### ModalSubir.jsx
 - Recibe prop `trasteroId` → append al FormData antes de enviar

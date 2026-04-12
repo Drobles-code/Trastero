@@ -39,16 +39,23 @@ server/
 database/
   schema.sql                     — esquema v2
   seed.sql                       — datos de prueba
+  backup_trastero_*.backup       — respaldos pg_dump (ignorados por git)
+SETUP.bat                        — configuración primer uso en PC nuevo
+iniciar.bat                      — arrancar backend + frontend
 ```
 
-## Estado (2026-04-09)
+## Estado (2026-04-12)
 - CRUD artículos completo, BD migrada a esquema v2
 - Campos tipados por categoría (Motor, Inmobiliaria)
 - Tema personalizable por usuario (ThemeContext + preferencias_usuario en BD)
+- Lightbox conectado al modal de detalle en MiTrastero (click foto → galería fullscreen)
+- SETUP.bat para configurar el proyecto en un PC nuevo desde cero
+- server/.env excluido del repo (credenciales seguras, usar server/.env.example como plantilla)
 
 ## Próximos pasos
-- Vista grupo/todo en página pública (Principal)
-- GIF thumbnails para carga más rápida
-- Filtro por descripción (backend listo, falta UI)
+- Categorías dinámicas desde BD (tabla `categorias`)
+- Ubicación física del trastero (campo `ciudad`/coordenadas en tabla `trasteros`)
+- Buscador global persistente en topnav
+- Vista pública del marketplace conectada a BD real (Principal + De.js usan Pixabay como placeholder)
 - Responsive / mobile
 - Múltiples trasteros por usuario (selector en Mi Trastero)
