@@ -23,7 +23,7 @@ const Box = styled.div`
   background: ${p => p.bg};
   border: 1px solid ${p => p.accent}44;
   border-radius: 14px; padding: 32px 28px 28px;
-  width: 100%; max-width: 520px; max-height: 90vh;
+  width: 100%; max-width: 680px; max-height: 90vh;
   overflow-y: auto; position: relative;
   display: flex; flex-direction: column; gap: 14px;
 `;
@@ -248,28 +248,32 @@ function ModalSubir({ isOpen, onClose, onPublicado, trasteroId }) {
   };
 
   return (
-    <Overlay onClick={handleClose}>
+    <Overlay>
       <Box bg={bg} accent={acc} onClick={e => e.stopPropagation()}>
         <CloseBtn onClick={handleClose}>✕</CloseBtn>
         <Title color={txt}>Nuevo artículo</Title>
 
-        {/* Categoría */}
-        <Label color={txt}>Categoría</Label>
-        <Select bg={bg} color={txt} accent={acc} value={categoria}
-          onChange={e => { setCategoria(e.target.value); setSubcategoria(''); setExtras({}); }}>
-          <option value="">Selecciona una categoría</option>
-          {CATEGORIAS.map(c => <option key={c.label} value={c.label}>{c.label}</option>)}
-        </Select>
-
-        {/* Subcategoría */}
-        {catSubs.length > 0 && <>
-          <Label color={txt}>Subcategoría</Label>
-          <Select bg={bg} color={txt} accent={acc} value={subcategoria}
-            onChange={e => setSubcategoria(e.target.value)}>
-            <option value="">Selecciona subcategoría</option>
-            {catSubs.map(s => <option key={s} value={s}>{s}</option>)}
-          </Select>
-        </>}
+        {/* Categoría + Subcategoría en fila */}
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ flex: 1 }}>
+            <Label color={txt}>Categoría</Label>
+            <Select bg={bg} color={txt} accent={acc} value={categoria}
+              onChange={e => { setCategoria(e.target.value); setSubcategoria(''); setExtras({}); }}>
+              <option value="">Selecciona una categoría</option>
+              {CATEGORIAS.map(c => <option key={c.label} value={c.label}>{c.label}</option>)}
+            </Select>
+          </div>
+          {catSubs.length > 0 && (
+            <div style={{ flex: 1 }}>
+              <Label color={txt}>Subcategoría</Label>
+              <Select bg={bg} color={txt} accent={acc} value={subcategoria}
+                onChange={e => setSubcategoria(e.target.value)}>
+                <option value="">Selecciona subcategoría</option>
+                {catSubs.map(s => <option key={s} value={s}>{s}</option>)}
+              </Select>
+            </div>
+          )}
+        </div>
 
         {/* Campos extra dinámicos */}
         {camposEx.length > 0 && <>
@@ -315,28 +319,30 @@ function ModalSubir({ isOpen, onClose, onPublicado, trasteroId }) {
           onChange={e => setDescripcion(e.target.value)}
           placeholder="Ford Ecosport 2.0 XLT 2007, Gasolina, 187.000 km, ITV en vigor hasta 2026, dos llaves, revisiones al día en concesionario oficial..." />
 
-        {/* Precio */}
-        <Label color={txt}>Precio</Label>
-        <PriceWrap color={txt}>
-          <Input bg={bg} color={txt} accent={acc} type="number"
-            value={precio} onChange={e => setPrecio(e.target.value)}
-            placeholder="0" min="0" step="1" style={{ paddingRight: 32 }} />
-          <span>€</span>
-        </PriceWrap>
-
-        {/* Negociable + Acepta cambio */}
-        <ToggleRow>
-          <TogglePill checked={negociable} accent={acc} color={txt}
-            onClick={() => setNegociable(v => !v)}>
-            <Dot checked={negociable} accent={acc} color={txt} />
-            Negociable
-          </TogglePill>
-          <TogglePill checked={aceptaCambio} accent={acc} color={txt}
-            onClick={() => setAceptaCambio(v => !v)}>
-            <Dot checked={aceptaCambio} accent={acc} color={txt} />
-            Acepta cambio
-          </TogglePill>
-        </ToggleRow>
+        {/* Precio + Toggles en misma fila (apilan en móvil) */}
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '16px', flexWrap: 'wrap' }}>
+          <div style={{ flex: '1 1 120px', minWidth: 100 }}>
+            <Label color={txt}>Precio</Label>
+            <PriceWrap color={txt}>
+              <Input bg={bg} color={txt} accent={acc} type="number"
+                value={precio} onChange={e => setPrecio(e.target.value)}
+                placeholder="0" min="0" step="1" style={{ paddingRight: 32 }} />
+              <span>€</span>
+            </PriceWrap>
+          </div>
+          <ToggleRow style={{ flex: '1 1 auto', justifyContent: 'flex-end', marginBottom: '2px' }}>
+            <TogglePill checked={negociable} accent={acc} color={txt}
+              onClick={() => setNegociable(v => !v)}>
+              <Dot checked={negociable} accent={acc} color={txt} />
+              Negociable
+            </TogglePill>
+            <TogglePill checked={aceptaCambio} accent={acc} color={txt}
+              onClick={() => setAceptaCambio(v => !v)}>
+              <Dot checked={aceptaCambio} accent={acc} color={txt} />
+              Acepto cambio
+            </TogglePill>
+          </ToggleRow>
+        </div>
 
         <Divider accent={acc} />
 

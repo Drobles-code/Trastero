@@ -516,9 +516,10 @@ const LightboxDot = styled.div`
 const IMG_BASE_CARD = { objectFit: 'cover', border: '2px solid rgb(247 247 251)' };
 const GRID_STYLE_CARD = { display: 'grid', gridTemplateColumns: '1fr 1fr' };
 
-function AdaptiveGrid({ ruta, imgs, width }) {
+function AdaptiveGrid({ ruta, imgs, thumbs, width }) {
   const gridStyle = width ? { ...GRID_STYLE_CARD, width } : GRID_STYLE_CARD;
-  const srcs = imgs.filter(Boolean).map(name => `${ruta}/${name}`);
+  const display = (thumbs && thumbs.length ? thumbs : imgs);
+  const srcs = display.filter(Boolean).map(name => `${ruta}/${name}`);
   const n = srcs.length;
   if (n === 0) return null;
   if (n === 1) return (
@@ -566,7 +567,12 @@ function TrasteroCard({ task, onDelete, onOpen, onEdit, theme }) {
     <CardWrapper bg={bg} accent={acc} onClick={() => onOpen(task)}>
       {/* ── Grid de imágenes con overlay hover ── */}
       <div style={{ position: 'relative' }}>
-        <AdaptiveGrid ruta={task.Ruta} imgs={[task.Imagen1, task.Imagen2, task.Imagen3, task.Imagen4]} width="100%" />
+        <AdaptiveGrid
+          ruta={task.Ruta}
+          imgs={[task.Imagen1, task.Imagen2, task.Imagen3, task.Imagen4]}
+          thumbs={[task.Thumb1||task.Imagen1, task.Thumb2||task.Imagen2, task.Thumb3||task.Imagen3, task.Thumb4||task.Imagen4]}
+          width="100%"
+        />
         <CardActions className="card-actions">
           <ActionBtn accent={acc} onClick={e => { e.stopPropagation(); onEdit(task); }}>
             ✏️ Editar

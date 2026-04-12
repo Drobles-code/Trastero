@@ -33,8 +33,31 @@ type: project
 - n=3: 2×`84px` arriba + 1 full `84px` abajo con `marginTop:'-4px'`
 - n=4: 2×2 `84px` con `marginTop:'-4px'` en fila inferior
 
+### Props AdaptiveGrid
+- `ruta` — base URL de la carpeta del usuario
+- `imgs` — array de filenames originales (JPG/PNG) — se usa en lightbox
+- `thumbs` — array de filenames WebP thumbnail — se usa en las cards (fallback a `imgs` si vacío)
+- `width` — ancho opcional del grid
+
 ### Diferencia Cargaimg vs MiTrastero
 Ambas tienen el mismo border. La diferencia es que MiTrastero NO tiene `export` en AdaptiveGrid (es función local).
+
+## Imágenes — dos versiones por foto
+Desde el servidor se reciben dos rutas por imagen:
+- `Imagen1..4` → original JPG/PNG (calidad máxima) — usado en **lightbox**
+- `Thumb1..4` → thumbnail WebP 800px (ligero) — usado en **cards y grids**
+
+Fallback: `Thumb1 || Imagen1` → si una imagen fue subida antes del sistema de thumbs, usa el original.
+
+```js
+// En Cargaimg.js y MiTrastero.jsx
+const thumbs = [
+  task.Thumb1 || task.Imagen1,
+  task.Thumb2 || task.Imagen2,
+  task.Thumb3 || task.Imagen3,
+  task.Thumb4 || task.Imagen4,
+];
+```
 
 ## MiTrastero.jsx — puntos clave
 - `PageWrapper` recibe `bg={theme.background}` (obligatorio para el fondo)
@@ -60,10 +83,39 @@ Ambas tienen el mismo border. La diferencia es que MiTrastero NO tiene `export` 
 ### ModalSubir.jsx
 - Recibe prop `trasteroId` → append al FormData antes de enviar
 - `TogglePill`: sin marcar = fondo `accent22`; marcado = fondo `accent` sólido, texto blanco
+- Categoría y Subcategoría en la misma fila (flex row)
+- Precio a la izquierda + pills Negociable/Acepto cambio a la derecha (misma fila, flex wrap)
+- Click fuera del modal NO cierra → solo cierra el botón ✕
 
 ### ModalEditar.jsx
 - Mismo estilo `TogglePill` que ModalSubir
 - Maneja `slots_info` JSON para saber qué imágenes son nuevas/vacías/existentes
+
+## Medidas de Modales
+
+### ModalSubir (`src/components/Modal/ModalSubir.jsx`)
+- **Box**: `max-width: 680px` · `max-height: 90vh` · `padding: 32px 28px 28px`
+- **Overlay**: `padding: 20px`
+- **CloseBtn**: `32×32px`
+- **Input / Select / Textarea**: `padding: 10px 14px`
+- **Textarea**: `min-height: 72px`
+- **TogglePill**: `padding: 6px 14px` · `border-radius: 20px`
+- **Slots de imagen**: `width: 80px` · `height: 80px` · `border-radius: 8px`
+- **PreviewGrid alturas**: 1 img → 140px · 2 imgs → 110px · 3-4 imgs → 90px
+- **ExtraGrid**: `minmax(120px, 1fr)` · `gap: 10px`
+
+### ModalEditar (`src/components/Modal/ModalEditar.jsx`)
+- **Box**: `max-width: 720px` · `max-height: 90vh` · `padding: 32px 32px 28px`
+- **Mobile (≤600px)**: `max-height: 95vh` · `padding: 24px 18px 20px` · overlay `padding: 0`
+- **TwoCol**: `gap: 12px` (colapsa a 1 col en ≤480px)
+- **Slots de imagen**: `width: 80px` · `height: 80px`
+- **ExtraGrid**: `minmax(140px, 1fr)` · `gap: 12px`
+- **PreviewGrid alturas**: 1 img → 140px · 2 imgs → 110px · 3-4 imgs → 90px
+
+### ModalLogin (`src/components/Modal/ModalLogin.jsx`)
+- **Box**: `max-width: 450px` · `max-height: 90vh` · `padding: 55px 40px 40px`
+- **Mobile (≤768px)**: `max-width: 90%` · `padding: 55px 20px 30px`
+- **CloseButton**: `36×36px`
 
 ## Categorías y campos extra
 `src/constants/categorias.js`

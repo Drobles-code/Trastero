@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS imagenes (
   imagenes_detalle_id INTEGER REFERENCES imagenes_detalle(id) ON DELETE CASCADE,
   trastero_id         INTEGER REFERENCES trasteros(id) ON DELETE CASCADE,
   ruta                VARCHAR(500) NOT NULL,
+  ruta_thumb          VARCHAR(500),          -- thumbnail WebP generado automáticamente por sharp
   posicion            INTEGER CHECK (posicion BETWEEN 1 AND 4),
   created_at          TIMESTAMP DEFAULT NOW()
 );

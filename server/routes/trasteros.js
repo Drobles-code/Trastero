@@ -3,8 +3,29 @@ const router         = express.Router();
 const path           = require('path');
 const fs             = require('fs');
 const multer         = require('multer');
+const sharp          = require('sharp');
 const pool           = require('../db');
 const authMiddleware = require('../middleware/authMiddleware');
+
+// ── Genera thumbnail WebP a partir del archivo original ────────
+async function generarThumb(filePath, dir, baseName) {
+  const thumbName = `${baseName}_thumb.webp`;
+  const thumbPath = path.join(dir, thumbName);
+  await sharp(filePath)
+    .resize({ width: 800, withoutEnlargement: true })
+    .webp({ quality: 80 })
+    .toFile(thumbPath);
+  return thumbName;
+}
+
+// Borra fichero del disco silenciosamente
+function borrarFichero(ruta) {
+  try {
+    const url = new URL(ruta);
+    const fp  = path.join(__dirname, '../public', url.pathname);
+    if (fs.existsSync(fp)) fs.unlinkSync(fp);
+  } catch {}
+}
 
 // ── Multer config ─────────────────────────────────────────────
 const storage = multer.diskStorage({
@@ -44,10 +65,14 @@ function buildExtras(row) {
 }
 
 function formatearTrastero(row) {
-  const imgs   = row.imagenes || [];
-  const getImg = (pos) => imgs.find(i => i.posicion === pos)?.ruta || '';
-  const img1   = getImg(1);
-  const sepIdx = img1.lastIndexOf('/');
+  const imgs    = row.imagenes || [];
+  const getImg  = (pos) => imgs.find(i => i.posicion === pos) || {};
+  const img1    = getImg(1);
+  const ruta1   = img1.ruta || '';
+  const sepIdx  = ruta1.lastIndexOf('/');
+
+  const imgFilename  = (pos) => (getImg(pos).ruta  || '').split('/').pop();
+  const thumbFilename = (pos) => (getImg(pos).ruta_thumb || '').split('/').pop();
 
   return {
     id:           row.id,
@@ -60,11 +85,15 @@ function formatearTrastero(row) {
     Negociable:   row.negociable    || false,
     AceptaCambio: row.acepta_cambio || false,
     Extras:       buildExtras(row),
-    Ruta:    sepIdx >= 0 ? img1.substring(0, sepIdx) : '',
-    Imagen1: img1.substring(sepIdx + 1),
-    Imagen2: getImg(2).split('/').pop(),
-    Imagen3: getImg(3).split('/').pop(),
-    Imagen4: getImg(4).split('/').pop(),
+    Ruta:    sepIdx >= 0 ? ruta1.substring(0, sepIdx) : '',
+    Imagen1: imgFilename(1),
+    Imagen2: imgFilename(2),
+    Imagen3: imgFilename(3),
+    Imagen4: imgFilename(4),
+    Thumb1:  thumbFilename(1),
+    Thumb2:  thumbFilename(2),
+    Thumb3:  thumbFilename(3),
+    Thumb4:  thumbFilename(4),
   };
 }
 
@@ -92,7 +121,7 @@ const SELECT_ARTICULO = `
     d.precio, d.negociable, d.acepta_cambio,
     d.km, d.anio, d.combustible, d.cv, d.metros, d.habitaciones, d.banos,
     json_agg(
-      json_build_object('posicion', i.posicion, 'ruta', i.ruta)
+      json_build_object('posicion', i.posicion, 'ruta', i.ruta, 'ruta_thumb', i.ruta_thumb)
       ORDER BY i.posicion
     ) FILTER (WHERE i.id IS NOT NULL) AS imagenes
   FROM imagenes_detalle d
@@ -242,11 +271,19 @@ router.post('/', authMiddleware, (req, res, next) => {
     const artId = artRes.rows[0].id;
 
     for (let i = 0; i < req.files.length; i++) {
-      const file = req.files[i];
-      const ruta = `${API_URL}/uploads/${req.usuario.id}/${file.filename}`;
+      const file     = req.files[i];
+      const ruta     = `${API_URL}/uploads/${req.usuario.id}/${file.filename}`;
+      const baseName = path.basename(file.filename, path.extname(file.filename));
+      const userDir  = path.join(__dirname, '../public/uploads', String(req.usuario.id));
+      let rutaThumb  = null;
+      try {
+        const thumbName = await generarThumb(file.path, userDir, baseName);
+        rutaThumb = `${API_URL}/uploads/${req.usuario.id}/${thumbName}`;
+      } catch (e) { console.error('Error generando thumb:', e.message); }
+
       await pool.query(
-        'INSERT INTO imagenes (imagenes_detalle_id, trastero_id, posicion, ruta) VALUES ($1,$2,$3,$4)',
-        [artId, contenedorId, i + 1, ruta]
+        'INSERT INTO imagenes (imagenes_detalle_id, trastero_id, posicion, ruta, ruta_thumb) VALUES ($1,$2,$3,$4,$5)',
+        [artId, contenedorId, i + 1, ruta, rutaThumb]
       );
     }
 
@@ -321,38 +358,40 @@ router.put('/:id', authMiddleware, (req, res, next) => {
 
       if (estado === 'vacio') {
         const row = await pool.query(
-          'SELECT ruta FROM imagenes WHERE imagenes_detalle_id=$1 AND posicion=$2', [id, pos]
+          'SELECT ruta, ruta_thumb FROM imagenes WHERE imagenes_detalle_id=$1 AND posicion=$2', [id, pos]
         );
         if (row.rows.length > 0) {
-          try {
-            const url = new URL(row.rows[0].ruta);
-            const fp  = path.join(__dirname, '../public', url.pathname);
-            if (fs.existsSync(fp)) fs.unlinkSync(fp);
-          } catch {}
+          borrarFichero(row.rows[0].ruta);
+          if (row.rows[0].ruta_thumb) borrarFichero(row.rows[0].ruta_thumb);
           await pool.query(
             'DELETE FROM imagenes WHERE imagenes_detalle_id=$1 AND posicion=$2', [id, pos]
           );
         }
       } else if (estado === 'nueva' && req.files[fileIdx]) {
-        const file = req.files[fileIdx++];
-        const ruta = `${API_URL}/uploads/${req.usuario.id}/${file.filename}`;
-        const row  = await pool.query(
-          'SELECT ruta FROM imagenes WHERE imagenes_detalle_id=$1 AND posicion=$2', [id, pos]
+        const file     = req.files[fileIdx++];
+        const ruta     = `${API_URL}/uploads/${req.usuario.id}/${file.filename}`;
+        const baseName = path.basename(file.filename, path.extname(file.filename));
+        const userDir  = path.join(__dirname, '../public/uploads', String(req.usuario.id));
+        let rutaThumb  = null;
+        try {
+          const thumbName = await generarThumb(file.path, userDir, baseName);
+          rutaThumb = `${API_URL}/uploads/${req.usuario.id}/${thumbName}`;
+        } catch (e) { console.error('Error generando thumb:', e.message); }
+
+        const row = await pool.query(
+          'SELECT ruta, ruta_thumb FROM imagenes WHERE imagenes_detalle_id=$1 AND posicion=$2', [id, pos]
         );
         if (row.rows.length > 0) {
-          try {
-            const url = new URL(row.rows[0].ruta);
-            const fp  = path.join(__dirname, '../public', url.pathname);
-            if (fs.existsSync(fp)) fs.unlinkSync(fp);
-          } catch {}
+          borrarFichero(row.rows[0].ruta);
+          if (row.rows[0].ruta_thumb) borrarFichero(row.rows[0].ruta_thumb);
           await pool.query(
-            'UPDATE imagenes SET ruta=$1 WHERE imagenes_detalle_id=$2 AND posicion=$3',
-            [ruta, id, pos]
+            'UPDATE imagenes SET ruta=$1, ruta_thumb=$2 WHERE imagenes_detalle_id=$3 AND posicion=$4',
+            [ruta, rutaThumb, id, pos]
           );
         } else {
           await pool.query(
-            'INSERT INTO imagenes (imagenes_detalle_id, trastero_id, posicion, ruta) VALUES ($1,$2,$3,$4)',
-            [id, trasteroId, pos, ruta]
+            'INSERT INTO imagenes (imagenes_detalle_id, trastero_id, posicion, ruta, ruta_thumb) VALUES ($1,$2,$3,$4,$5)',
+            [id, trasteroId, pos, ruta, rutaThumb]
           );
         }
       }
@@ -388,16 +427,13 @@ router.delete('/:id/imagenes/:posicion', authMiddleware, async (req, res) => {
     );
     if (artRow.rows.length === 0) return res.status(404).json({ error: 'Artículo no encontrado o sin permiso' });
 
-    // Borrar fichero del disco
+    // Borrar fichero del disco (original + thumb)
     const imgRow = await pool.query(
-      'SELECT ruta FROM imagenes WHERE imagenes_detalle_id=$1 AND posicion=$2', [id, pos]
+      'SELECT ruta, ruta_thumb FROM imagenes WHERE imagenes_detalle_id=$1 AND posicion=$2', [id, pos]
     );
     if (imgRow.rows.length === 0) return res.status(404).json({ error: 'Imagen no encontrada' });
-    try {
-      const url      = new URL(imgRow.rows[0].ruta);
-      const filePath = path.join(__dirname, '../public', url.pathname);
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    } catch {}
+    borrarFichero(imgRow.rows[0].ruta);
+    if (imgRow.rows[0].ruta_thumb) borrarFichero(imgRow.rows[0].ruta_thumb);
 
     await pool.query(
       'DELETE FROM imagenes WHERE imagenes_detalle_id=$1 AND posicion=$2', [id, pos]
@@ -444,16 +480,13 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Artículo no encontrado o sin permiso' });
     }
 
-    // Borrar ficheros del disco
+    // Borrar ficheros del disco (original + thumb)
     const imagenes = await pool.query(
-      'SELECT ruta FROM imagenes WHERE imagenes_detalle_id=$1', [id]
+      'SELECT ruta, ruta_thumb FROM imagenes WHERE imagenes_detalle_id=$1', [id]
     );
     for (const img of imagenes.rows) {
-      try {
-        const url      = new URL(img.ruta);
-        const filePath = path.join(__dirname, '../public', url.pathname);
-        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-      } catch {}
+      borrarFichero(img.ruta);
+      if (img.ruta_thumb) borrarFichero(img.ruta_thumb);
     }
 
     // CASCADE borra imagenes al borrar imagenes_detalle

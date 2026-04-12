@@ -13,10 +13,11 @@ const GRID_STYLE = {
   width: '244px',
 };
 
-function AdaptiveGrid({ ruta, imgs, width }) {
-  // imgs = array de filenames, filtradas las vacías
+function AdaptiveGrid({ ruta, imgs, thumbs, width }) {
+  // thumbs = array de filenames WebP para previsualización rápida (fallback a imgs)
   const gridStyle = width ? { ...GRID_STYLE, width } : GRID_STYLE;
-  const srcs = imgs.filter(Boolean).map(name => `${ruta}/${name}`);
+  const display = (thumbs && thumbs.length ? thumbs : imgs);
+  const srcs = display.filter(Boolean).map(name => `${ruta}/${name}`);
   const n = srcs.length;
 
   if (n === 0) return null;
@@ -64,7 +65,13 @@ function AdaptiveGrid({ ruta, imgs, width }) {
 class Cargaimg extends Component {
   render() {
     const { task } = this.props;
-    const imgs = [task.Imagen1, task.Imagen2, task.Imagen3, task.Imagen4];
+    const imgs   = [task.Imagen1, task.Imagen2, task.Imagen3, task.Imagen4];
+    const thumbs = [
+      task.Thumb1 || task.Imagen1,
+      task.Thumb2 || task.Imagen2,
+      task.Thumb3 || task.Imagen3,
+      task.Thumb4 || task.Imagen4,
+    ];
 
     return (
       <Link to={`/De/${task.Nombre}`}>
@@ -74,14 +81,14 @@ class Cargaimg extends Component {
               <p className="titulo-tras">
                 <img
                   className="img-titulo-tras"
-                  src={`${task.Ruta}/${task.Imagen1}`}
+                  src={`${task.Ruta}/${task.Thumb1 || task.Imagen1}`}
                   alt={task.Nombre}
                   loading="lazy"
                 />
                 {task.Nombre}
               </p>
             </div>
-            <AdaptiveGrid ruta={task.Ruta} imgs={imgs} />
+            <AdaptiveGrid ruta={task.Ruta} imgs={imgs} thumbs={thumbs} />
           </article>
         </div>
       </Link>
