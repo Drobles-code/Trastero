@@ -28,6 +28,9 @@ yarn-debug.log*
 yarn-error.log*
 npm.log*
 
+# zips
+*.zip
+
 # backups y respaldos
 database/*.backup
 database/RESPALDO_*
