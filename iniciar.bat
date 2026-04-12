@@ -1,7 +1,7 @@
 @echo off
 setlocal enabledelayedexpansion
 title Trastero — Servicios
-
+::
 :: ─────────────────────────────────────────────
 ::  Rutas
 :: ─────────────────────────────────────────────
