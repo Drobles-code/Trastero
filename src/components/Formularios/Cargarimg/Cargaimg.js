@@ -79,7 +79,7 @@ class Cargaimg extends Component {
       if (stored) currentUserId = JSON.parse(stored).id;
     } catch {}
     const isOwner = currentUserId && task.usuario_id === currentUserId;
-    const linkTo  = isOwner ? '/mi-trastero' : `/De/${task.Nombre}`;
+    const linkTo  = isOwner ? '/mi-trastero' : `/De/${task.trastero_nombre}`;
 
     return (
       <Link to={linkTo}>

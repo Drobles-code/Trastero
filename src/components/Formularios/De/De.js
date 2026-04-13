@@ -2,6 +2,7 @@ import React, { useContext, useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ThemeContext } from '../../../context/ThemeContext';
+import { formatExtra } from '../../../constants/categorias';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -11,106 +12,336 @@ const getContrast = (hex) => {
   return (0.299*r + 0.587*g + 0.114*b)/255 > 0.5 ? '#000000' : '#ffffff';
 };
 
-/* ── Styled ─────────────────────────────────────────────────── */
-const Page = styled.div`
-  max-width: 860px;
-  margin: 0 auto;
-  padding: 32px 20px;
+/* ── Layout ──────────────────────────────────────────────────── */
+
+const PageWrapper = styled.div`
+  width: calc(100% + 40px);
+  margin-left: -20px;
+  margin-right: -20px;
+  padding: 24px 20px 60px;
+  min-height: 80vh;
+`;
+
+const HeaderCard = styled.div`
+  background: ${p => p.bg};
+  border: 1px solid ${p => p.accent}55;
+  border-radius: 12px;
+  padding: 20px 24px;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+`;
+
+const HeaderLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 14px;
+`;
+
+const HeaderMeta = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+`;
+
+const TrasteroName = styled.h1`
+  color: ${p => getContrast(p.bg)};
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+`;
+
+const TrasteroSub = styled.p`
+  color: ${p => getContrast(p.bg)}88;
+  font-size: 13px;
+  margin: 0;
 `;
 
 const BackBtn = styled.button`
   background: none;
   border: 1px solid ${p => p.accent}44;
   color: ${p => p.accent};
-  padding: 6px 16px;
+  padding: 8px 16px;
   border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
-  margin-bottom: 24px;
+  font-weight: 600;
+  transition: all 0.2s;
   &:hover { background: ${p => p.accent}22; }
 `;
 
-const Title = styled.h1`
-  color: ${p => p.color};
-  font-size: 28px;
+const CountBadge = styled.div`
+  color: ${p => p.accent};
+  font-size: 14px;
+  font-weight: 500;
+`;
+
+/* ── Grid ────────────────────────────────────────────────────── */
+
+const Grid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 249px);
+  justify-content: center;
+  gap: 10px;
+`;
+
+/* ── Tarjeta pública ─────────────────────────────────────────── */
+
+const CardWrapper = styled.div`
+  position: relative;
+  width: 249px;
+  cursor: pointer;
+  overflow: hidden;
+  border-radius: 10px;
+  background: ${p => p.bg};
+  border: 2px solid rgb(247, 247, 251);
+  &:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.35); }
+`;
+
+const IMG_BASE = { objectFit: 'cover', border: '2px solid rgb(247 247 251)' };
+const GRID_STYLE = { display: 'grid', gridTemplateColumns: '1fr 1fr', width: '244px' };
+
+function AdaptiveGrid({ ruta, imgs, thumbs }) {
+  const display = (thumbs && thumbs.length ? thumbs : imgs);
+  const srcs = display.filter(Boolean).map(n => `${ruta}/${n}`);
+  const n = srcs.length;
+  if (n === 0) return null;
+  if (n === 1) return (
+    <div style={GRID_STYLE}>
+      <img src={srcs[0]} alt="" loading="lazy"
+        style={{ ...IMG_BASE, gridColumn: '1/3', gridRow: '1/3', width: '100%', height: '168px', borderRadius: '0 0 8px 8px' }} />
+    </div>
+  );
+  if (n === 2) return (
+    <div style={GRID_STYLE}>
+      <img src={srcs[0]} alt="" loading="lazy" style={{ ...IMG_BASE, gridColumn: '1/2', gridRow: '1/3', width: '100%', height: '168px', borderRadius: '0 0 0 8px' }} />
+      <img src={srcs[1]} alt="" loading="lazy" style={{ ...IMG_BASE, gridColumn: '2/3', gridRow: '1/3', width: '100%', height: '168px', borderRadius: '0 0 8px 0' }} />
+    </div>
+  );
+  if (n === 3) return (
+    <div style={GRID_STYLE}>
+      <img src={srcs[0]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px' }} />
+      <img src={srcs[1]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px' }} />
+      <img src={srcs[2]} alt="" loading="lazy" style={{ ...IMG_BASE, gridColumn: '1/3', width: '100%', height: '84px', marginTop: '-4px', borderRadius: '0 0 8px 8px' }} />
+    </div>
+  );
+  return (
+    <div style={GRID_STYLE}>
+      <img src={srcs[0]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px' }} />
+      <img src={srcs[1]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px' }} />
+      <img src={srcs[2]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px', marginTop: '-4px', borderRadius: '0 0 0 8px' }} />
+      <img src={srcs[3]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px', marginTop: '-4px', borderRadius: '0 0 8px 0' }} />
+    </div>
+  );
+}
+
+const CardInfo = styled.div`
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-top: 2px solid rgb(247, 247, 251);
+`;
+
+const CardPrice = styled.div`
+  font-size: 18px;
   font-weight: 800;
+  color: ${p => p.accent};
+  line-height: 1.1;
+`;
+
+const CardNombre = styled.div`
+  font-size: 18px;
+  font-weight: 700;
+  color: ${p => p.color};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const CardDesc = styled.div`
+  font-size: 13px;
+  color: ${p => p.color};
+  opacity: 0.65;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+`;
+
+const CardBadges = styled.div`
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-top: 3px;
+`;
+
+const CardBadge = styled.span`
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: ${p => p.accent}22;
+  color: ${p => p.accent};
+  border: 1px solid ${p => p.accent}44;
+`;
+
+function TrasteroCard({ task, theme, onOpen }) {
+  const bg  = theme.modalBg || '#1a1a1a';
+  const acc = theme.accent  || '#667eea';
+  const txt = getContrast(bg);
+  const thumbs = [task.Thumb1||task.Imagen1, task.Thumb2||task.Imagen2, task.Thumb3||task.Imagen3, task.Thumb4||task.Imagen4];
+  const imgs   = [task.Imagen1, task.Imagen2, task.Imagen3, task.Imagen4];
+  const precio = task.Precio !== null && task.Precio !== undefined
+    ? task.Precio.toLocaleString('es-ES', { minimumFractionDigits: 0 }) + ' €'
+    : null;
+  const extra = formatExtra(task.Extras);
+
+  return (
+    <CardWrapper bg={bg} onClick={() => onOpen(task)}>
+      <div style={{ position: 'relative' }}>
+        <div className="backgroundTitle" style={{ background: `linear-gradient(135deg, ${acc}cc, ${acc}88)`, padding: '8px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <img
+            style={{ width: 20, height: 20, borderRadius: 4, objectFit: 'cover', flexShrink: 0 }}
+            src={`${task.Ruta}/${task.Thumb1 || task.Imagen1}`}
+            alt=""
+            loading="lazy"
+          />
+          <span style={{ color: '#fff', fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {task.Nombre}
+          </span>
+        </div>
+        <AdaptiveGrid ruta={task.Ruta} imgs={imgs} thumbs={thumbs} />
+      </div>
+      <CardInfo>
+        {precio && <CardPrice accent={acc}>{precio}</CardPrice>}
+        <CardNombre color={txt}>{task.Nombre}</CardNombre>
+        {task.Descripcion && <CardDesc color={txt}>{task.Descripcion}</CardDesc>}
+        {extra && <div style={{ fontSize: 12, color: txt, opacity: 0.75 }}>{extra}</div>}
+        {(task.AceptaCambio || task.Negociable) && (
+          <CardBadges>
+            {task.AceptaCambio && <CardBadge accent={acc}>Acepta cambio</CardBadge>}
+            {task.Negociable   && <CardBadge accent={acc}>Negociable</CardBadge>}
+          </CardBadges>
+        )}
+      </CardInfo>
+    </CardWrapper>
+  );
+}
+
+/* ── Modal detalle ───────────────────────────────────────────── */
+
+const Overlay = styled.div`
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 2000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+`;
+
+const DetailBox = styled.div`
+  background: ${p => p.bg};
+  border-radius: 14px;
+  padding: 28px;
+  max-width: 560px;
+  width: 100%;
+  max-height: 88vh;
+  overflow-y: auto;
+  position: relative;
+`;
+
+const DetailClose = styled.button`
+  position: absolute; top: 14px; right: 14px;
+  background: transparent; border: none;
+  font-size: 20px; cursor: pointer;
+  color: ${p => getContrast(p.bg)}88;
+  &:hover { color: ${p => getContrast(p.bg)}; }
+`;
+
+const DetailTitle = styled.h2`
+  color: ${p => p.color};
+  font-size: 22px; font-weight: 800;
   margin: 0 0 8px;
 `;
 
-const Meta = styled.div`
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  align-items: center;
-  margin-bottom: 16px;
+const DetailPrice = styled.div`
+  color: ${p => p.accent};
+  font-size: 26px; font-weight: 800;
+  margin-bottom: 10px;
 `;
 
-const Badge = styled.span`
-  background: ${p => p.accent}22;
-  border: 1px solid ${p => p.accent}44;
-  color: ${p => p.accent};
-  border-radius: 20px;
-  padding: 3px 12px;
-  font-size: 13px;
-`;
-
-const Price = styled.div`
-  color: ${p => p.accent};
-  font-size: 26px;
-  font-weight: 800;
+const DetailMeta = styled.div`
+  display: flex; gap: 6px; flex-wrap: wrap;
   margin-bottom: 12px;
 `;
 
-const Desc = styled.p`
+const MetaTag = styled.span`
+  background: ${p => (p.accent || '#888')}22;
+  border: 1px solid ${p => (p.accent || '#888')}44;
+  color: ${p => p.accent || '#888'};
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 12px; font-weight: 600;
+`;
+
+const DetailDesc = styled.p`
   color: ${p => p.color};
   opacity: 0.85;
   line-height: 1.6;
-  margin: 0 0 20px;
+  margin: 0 0 16px;
+  font-size: 14px;
 `;
 
-const GRID2 = { display: 'grid', gridTemplateColumns: '1fr 1fr', borderRadius: 10, overflow: 'hidden', marginBottom: 24 };
-const IMG_BASE = { objectFit: 'cover', border: '2px solid rgb(247 247 251)', cursor: 'zoom-in' };
+/* ── Detail image grid ───────────────────────────────────────── */
+const DG2 = { display: 'grid', gridTemplateColumns: '1fr 1fr', borderRadius: 10, overflow: 'hidden', marginBottom: 0 };
+const DI  = { objectFit: 'cover', border: '2px solid rgb(247 247 251)', cursor: 'zoom-in' };
 
-function ImageGrid({ ruta, imgs, onImgClick }) {
+function DetailGrid({ ruta, imgs, onImgClick }) {
   const srcs = imgs.filter(Boolean).map(n => `${ruta}/${n}`);
   const n = srcs.length;
   if (n === 0) return null;
   if (n === 1) return (
     <img src={srcs[0]} alt="" onClick={() => onImgClick(0)}
-      style={{ ...IMG_BASE, width: '100%', height: 380, borderRadius: 10, marginBottom: 24, display: 'block' }} />
+      style={{ ...DI, width: '100%', height: 300, borderRadius: 10, display: 'block', marginBottom: 0 }} />
   );
   if (n === 2) return (
-    <div style={GRID2}>
-      <img src={srcs[0]} alt="" onClick={() => onImgClick(0)} style={{ ...IMG_BASE, width: '100%', height: 300 }} />
-      <img src={srcs[1]} alt="" onClick={() => onImgClick(1)} style={{ ...IMG_BASE, width: '100%', height: 300 }} />
+    <div style={DG2}>
+      <img src={srcs[0]} alt="" onClick={() => onImgClick(0)} style={{ ...DI, width: '100%', height: 220 }} />
+      <img src={srcs[1]} alt="" onClick={() => onImgClick(1)} style={{ ...DI, width: '100%', height: 220 }} />
     </div>
   );
   if (n === 3) return (
-    <div style={GRID2}>
-      <img src={srcs[0]} alt="" onClick={() => onImgClick(0)} style={{ ...IMG_BASE, width: '100%', height: 200 }} />
-      <img src={srcs[1]} alt="" onClick={() => onImgClick(1)} style={{ ...IMG_BASE, width: '100%', height: 200 }} />
-      <img src={srcs[2]} alt="" onClick={() => onImgClick(2)} style={{ ...IMG_BASE, gridColumn: '1/3', width: '100%', height: 200 }} />
+    <div style={DG2}>
+      <img src={srcs[0]} alt="" onClick={() => onImgClick(0)} style={{ ...DI, width: '100%', height: 160 }} />
+      <img src={srcs[1]} alt="" onClick={() => onImgClick(1)} style={{ ...DI, width: '100%', height: 160 }} />
+      <img src={srcs[2]} alt="" onClick={() => onImgClick(2)} style={{ ...DI, gridColumn: '1/3', width: '100%', height: 160 }} />
     </div>
   );
   return (
-    <div style={GRID2}>
-      <img src={srcs[0]} alt="" onClick={() => onImgClick(0)} style={{ ...IMG_BASE, width: '100%', height: 200 }} />
-      <img src={srcs[1]} alt="" onClick={() => onImgClick(1)} style={{ ...IMG_BASE, width: '100%', height: 200 }} />
-      <img src={srcs[2]} alt="" onClick={() => onImgClick(2)} style={{ ...IMG_BASE, width: '100%', height: 200 }} />
-      <img src={srcs[3]} alt="" onClick={() => onImgClick(3)} style={{ ...IMG_BASE, width: '100%', height: 200 }} />
+    <div style={DG2}>
+      <img src={srcs[0]} alt="" onClick={() => onImgClick(0)} style={{ ...DI, width: '100%', height: 160 }} />
+      <img src={srcs[1]} alt="" onClick={() => onImgClick(1)} style={{ ...DI, width: '100%', height: 160 }} />
+      <img src={srcs[2]} alt="" onClick={() => onImgClick(2)} style={{ ...DI, width: '100%', height: 160 }} />
+      <img src={srcs[3]} alt="" onClick={() => onImgClick(3)} style={{ ...DI, width: '100%', height: 160 }} />
     </div>
   );
 }
 
 /* ── Lightbox ────────────────────────────────────────────────── */
+
 const LbOverlay = styled.div`
   position: fixed; inset: 0; background: rgba(0,0,0,0.92);
   display: flex; align-items: center; justify-content: center;
   z-index: 3000; cursor: zoom-out;
 `;
 const LbImg = styled.img`
-  max-width: 92vw; max-height: 88vh; object-fit: contain; border-radius: 6px;
-  cursor: default;
+  max-width: 92vw; max-height: 88vh; object-fit: contain; border-radius: 6px; cursor: default;
 `;
 const LbNav = styled.button`
   position: absolute; top: 50%; transform: translateY(-50%);
@@ -126,34 +357,50 @@ const LbClose = styled.button`
   background: rgba(255,255,255,0.15); border: none; color: #fff;
   font-size: 18px; width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
 `;
+const LbDots = styled.div`
+  position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 8px;
+`;
+const LbDot = styled.button`
+  width: 8px; height: 8px; border-radius: 50%; border: none; cursor: pointer;
+  background: ${p => p.active ? '#fff' : 'rgba(255,255,255,0.35)'};
+  padding: 0; transition: background 0.2s;
+`;
 
-/* ── Main ────────────────────────────────────────────────────── */
+/* ── Estado vacío ────────────────────────────────────────────── */
+
+const EmptyState = styled.div`
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; min-height: 40vh; gap: 14px; text-align: center;
+`;
+
+/* ── Componente principal ────────────────────────────────────── */
+
 export default function De() {
   const { nombre }      = useParams();
   const navigate        = useNavigate();
   const { theme }       = useContext(ThemeContext);
-  const [art, setArt]   = useState(null);
-  const [error, setErr] = useState(null);
-  const [lb, setLb]     = useState(null); // { imgs, idx }
+
+  const [arts,    setArts]   = useState([]);
+  const [cargando, setCarg]  = useState(true);
+  const [error,   setError]  = useState(null);
+  const [detalle, setDetalle] = useState(null);
+  const [lb,      setLb]     = useState(null); // { imgs, idx }
 
   const acc = theme.accent    || '#667eea';
-  const bg  = theme.background|| '#000';
-  const txt = getContrast(bg);
+  const bg  = theme.modalBg   || '#1a1a1a';
+  const pageBg = theme.background || '#000';
+  const txt = getContrast(pageBg);
 
   useEffect(() => {
-    fetch(`${API_URL}/api/trasteros/${encodeURIComponent(nombre)}`)
-      .then(r => r.ok ? r.json() : Promise.reject('No encontrado'))
-      .then(setArt)
-      .catch(() => setErr('Artículo no encontrado'));
+    setCarg(true);
+    fetch(`${API_URL}/api/trasteros/publico/${encodeURIComponent(nombre)}`)
+      .then(r => r.ok ? r.json() : Promise.reject('Error'))
+      .then(data => { setArts(data); setCarg(false); })
+      .catch(() => { setError('No se pudo cargar el trastero'); setCarg(false); });
   }, [nombre]);
 
-  const openLb = (i) => {
-    if (!art) return;
-    const imgs = [art.Imagen1, art.Imagen2, art.Imagen3, art.Imagen4]
-      .filter(Boolean).map(n => `${art.Ruta}/${n}`);
-    setLb({ imgs, idx: i });
-  };
-
+  // Lightbox keyboard
   useEffect(() => {
     if (!lb) return;
     const handler = (e) => {
@@ -165,61 +412,16 @@ export default function De() {
     return () => window.removeEventListener('keydown', handler);
   }, [lb]);
 
-  if (error) return (
-    <Page>
-      <BackBtn accent={acc} onClick={() => navigate(-1)}>← Volver</BackBtn>
-      <Title color={txt}>{error}</Title>
-    </Page>
-  );
-
-  if (!art) return (
-    <Page><Title color={txt}>Cargando...</Title></Page>
-  );
-
-  const precio = art.Precio !== null && art.Precio !== undefined
-    ? art.Precio.toLocaleString('es-ES', { minimumFractionDigits: 0 }) + ' €'
-    : null;
-
-  const extras = art.Extras || {};
-  const extraTexts = [
-    extras.km           && `${Number(extras.km).toLocaleString('es-ES')} km`,
-    extras.anio         && `${extras.anio}`,
-    extras.combustible  && extras.combustible,
-    extras.cv           && `${extras.cv} CV`,
-    extras.metros       && `${extras.metros} m²`,
-    extras.habitaciones && `${extras.habitaciones} hab.`,
-    extras.banos        && `${extras.banos} baños`,
-  ].filter(Boolean);
+  const openLb = (task, i) => {
+    const imgs = [task.Imagen1, task.Imagen2, task.Imagen3, task.Imagen4]
+      .filter(Boolean).map(n => `${task.Ruta}/${n}`);
+    setLb({ imgs, idx: i });
+  };
 
   return (
-    <Page>
-      <BackBtn accent={acc} onClick={() => navigate(-1)}>← Volver</BackBtn>
+    <PageWrapper>
 
-      {art.trastero_nombre && (
-        <div style={{ color: acc, fontSize: 13, fontWeight: 600, marginBottom: 8, opacity: 0.8 }}>
-          🏠 {art.trastero_nombre}
-        </div>
-      )}
-
-      <Title color={txt}>{art.Nombre}</Title>
-
-      <Meta>
-        {art.Categoria   && <Badge accent={acc}>{art.Categoria}</Badge>}
-        {art.Subcategoria && <Badge accent={acc}>{art.Subcategoria}</Badge>}
-        {extraTexts.map((t, i) => <Badge key={i} accent={acc}>{t}</Badge>)}
-        {art.Negociable   && <Badge accent={acc}>Negociable</Badge>}
-        {art.AceptaCambio && <Badge accent={acc}>Acepto cambio</Badge>}
-      </Meta>
-
-      {precio && <Price accent={acc}>{precio}</Price>}
-      {art.Descripcion && <Desc color={txt}>{art.Descripcion}</Desc>}
-
-      <ImageGrid
-        ruta={art.Ruta}
-        imgs={[art.Imagen1, art.Imagen2, art.Imagen3, art.Imagen4]}
-        onImgClick={openLb}
-      />
-
+      {/* ── Lightbox ── */}
       {lb && (
         <LbOverlay onClick={() => setLb(null)}>
           <LbClose onClick={() => setLb(null)}>✕</LbClose>
@@ -228,8 +430,97 @@ export default function De() {
           <LbImg src={lb.imgs[lb.idx]} alt="" onClick={e => e.stopPropagation()} />
           <LbNav disabled={lb.idx === lb.imgs.length - 1}
             onClick={e => { e.stopPropagation(); setLb(p => ({ ...p, idx: p.idx + 1 })); }}>›</LbNav>
+          {lb.imgs.length > 1 && (
+            <LbDots onClick={e => e.stopPropagation()}>
+              {lb.imgs.map((_, i) => (
+                <LbDot key={i} active={i === lb.idx} onClick={() => setLb(p => ({ ...p, idx: i }))} />
+              ))}
+            </LbDots>
+          )}
         </LbOverlay>
       )}
-    </Page>
+
+      {/* ── Modal detalle ── */}
+      {detalle && (
+        <Overlay onClick={() => setDetalle(null)}>
+          <DetailBox bg={bg} onClick={e => e.stopPropagation()}>
+            <DetailClose bg={bg} onClick={() => setDetalle(null)}>✕</DetailClose>
+            <DetailTitle color={getContrast(bg)}>{detalle.Nombre}</DetailTitle>
+
+            {detalle.Precio !== null && detalle.Precio !== undefined && (
+              <DetailPrice accent={acc}>
+                {detalle.Precio.toLocaleString('es-ES', { minimumFractionDigits: 0 })} €
+              </DetailPrice>
+            )}
+
+            {(detalle.Categoria || detalle.Subcategoria || detalle.Negociable || detalle.AceptaCambio || formatExtra(detalle.Extras)) && (
+              <DetailMeta>
+                {detalle.Subcategoria && <MetaTag accent={acc}>{detalle.Subcategoria}</MetaTag>}
+                {!detalle.Subcategoria && detalle.Categoria && <MetaTag accent={acc}>{detalle.Categoria}</MetaTag>}
+                {formatExtra(detalle.Extras) && <MetaTag accent={acc}>{formatExtra(detalle.Extras)}</MetaTag>}
+                {detalle.Negociable   && <MetaTag accent={acc}>Negociable</MetaTag>}
+                {detalle.AceptaCambio && <MetaTag accent={acc}>Acepta cambio</MetaTag>}
+              </DetailMeta>
+            )}
+
+            {detalle.Descripcion && (
+              <DetailDesc color={getContrast(bg)}>{detalle.Descripcion}</DetailDesc>
+            )}
+
+            <DetailGrid
+              ruta={detalle.Ruta}
+              imgs={[detalle.Imagen1, detalle.Imagen2, detalle.Imagen3, detalle.Imagen4]}
+              onImgClick={i => openLb(detalle, i)}
+            />
+          </DetailBox>
+        </Overlay>
+      )}
+
+      {/* ── Header ── */}
+      <HeaderCard bg={bg} accent={acc}>
+        <HeaderLeft>
+          <HeaderMeta>
+            <TrasteroName bg={bg}>🏠 {nombre}</TrasteroName>
+            {!cargando && (
+              <TrasteroSub bg={bg}>
+                {arts.length} {arts.length === 1 ? 'artículo' : 'artículos'}
+              </TrasteroSub>
+            )}
+          </HeaderMeta>
+        </HeaderLeft>
+        <BackBtn accent={acc} onClick={() => navigate(-1)}>← Volver</BackBtn>
+      </HeaderCard>
+
+      {/* ── Contenido ── */}
+      {cargando ? (
+        <EmptyState>
+          <div style={{ fontSize: 48 }}>⏳</div>
+          <p style={{ color: txt, margin: 0 }}>Cargando...</p>
+        </EmptyState>
+      ) : error ? (
+        <EmptyState>
+          <div style={{ fontSize: 48 }}>❌</div>
+          <p style={{ color: txt, margin: 0 }}>{error}</p>
+        </EmptyState>
+      ) : arts.length === 0 ? (
+        <EmptyState>
+          <div style={{ fontSize: 64 }}>📦</div>
+          <p style={{ color: txt, fontSize: 18, fontWeight: 700, margin: 0 }}>Este trastero está vacío</p>
+          <p style={{ color: txt + '88', margin: 0 }}>Aún no hay artículos publicados</p>
+        </EmptyState>
+      ) : (
+        <Grid>
+          {arts.map(task => (
+            <TrasteroCard
+              key={task.id}
+              task={task}
+              theme={theme}
+              onOpen={t => setDetalle(t)}
+            />
+          ))}
+        </Grid>
+      )}
+
+    </PageWrapper>
   );
 }

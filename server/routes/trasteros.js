@@ -181,6 +181,24 @@ router.get('/contenedor', authMiddleware, async (req, res) => {
   }
 });
 
+// ── GET /api/trasteros/publico/:trasteroNombre ────────────────
+// Devuelve todos los artículos de un trastero por nombre (vista pública)
+router.get('/publico/:trasteroNombre', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `${SELECT_ARTICULO}
+       WHERE LOWER(t.nombre) = LOWER($1)
+       GROUP BY d.id, t.usuario_id, t.nombre
+       ORDER BY d.id`,
+      [req.params.trasteroNombre]
+    );
+    res.json(result.rows.map(formatearTrastero));
+  } catch (err) {
+    console.error('Error en GET /api/trasteros/publico/:trasteroNombre:', err);
+    res.status(500).json({ error: 'Error al obtener el trastero' });
+  }
+});
+
 // ── GET /api/trasteros/:nombre ────────────────────────────────
 router.get('/:nombre', async (req, res) => {
   try {
