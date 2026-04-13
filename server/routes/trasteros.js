@@ -75,9 +75,11 @@ function formatearTrastero(row) {
   const thumbFilename = (pos) => (getImg(pos).ruta_thumb || '').split('/').pop();
 
   return {
-    id:           row.id,
-    trastero_id:  row.trastero_id,
-    Nombre:       row.nombre,
+    id:              row.id,
+    trastero_id:     row.trastero_id,
+    usuario_id:      row.usuario_id,
+    trastero_nombre: row.trastero_nombre,
+    Nombre:          row.nombre,
     Categoria:    row.categoria     || '',
     Subcategoria: row.subcategoria  || '',
     Descripcion:  row.descripcion   || '',
@@ -120,7 +122,7 @@ const SELECT_ARTICULO = `
     d.id, d.trastero_id, d.nombre, d.categoria, d.subcategoria, d.descripcion,
     d.precio, d.negociable, d.acepta_cambio,
     d.km, d.anio, d.combustible, d.cv, d.metros, d.habitaciones, d.banos,
-    t.usuario_id,
+    t.usuario_id, t.nombre AS trastero_nombre,
     json_agg(
       json_build_object('posicion', i.posicion, 'ruta', i.ruta, 'ruta_thumb', i.ruta_thumb)
       ORDER BY i.posicion
@@ -149,7 +151,7 @@ router.get('/', async (req, res) => {
 
     const where  = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
     const result = await pool.query(
-      `${SELECT_ARTICULO} ${where} GROUP BY d.id ORDER BY d.id`,
+      `${SELECT_ARTICULO} ${where} GROUP BY d.id, t.usuario_id, t.nombre ORDER BY d.id`,
       params
     );
 
@@ -183,7 +185,7 @@ router.get('/contenedor', authMiddleware, async (req, res) => {
 router.get('/:nombre', async (req, res) => {
   try {
     const result = await pool.query(
-      `${SELECT_ARTICULO} WHERE LOWER(d.nombre) = LOWER($1) GROUP BY d.id`,
+      `${SELECT_ARTICULO} WHERE LOWER(d.nombre) = LOWER($1) GROUP BY d.id, t.usuario_id, t.nombre`,
       [req.params.nombre]
     );
 
@@ -289,7 +291,7 @@ router.post('/', authMiddleware, (req, res, next) => {
     }
 
     const creado = await pool.query(
-      `${SELECT_ARTICULO} WHERE d.id = $1 GROUP BY d.id`,
+      `${SELECT_ARTICULO} WHERE d.id = $1 GROUP BY d.id, t.usuario_id, t.nombre`,
       [artId]
     );
 
@@ -400,7 +402,7 @@ router.put('/:id', authMiddleware, (req, res, next) => {
     }
 
     const actualizado = await pool.query(
-      `${SELECT_ARTICULO} WHERE d.id = $1 GROUP BY d.id`,
+      `${SELECT_ARTICULO} WHERE d.id = $1 GROUP BY d.id, t.usuario_id, t.nombre`,
       [id]
     );
 
@@ -454,7 +456,7 @@ router.delete('/:id/imagenes/:posicion', authMiddleware, async (req, res) => {
     }
 
     const actualizado = await pool.query(
-      `${SELECT_ARTICULO} WHERE d.id = $1 GROUP BY d.id`,
+      `${SELECT_ARTICULO} WHERE d.id = $1 GROUP BY d.id, t.usuario_id, t.nombre`,
       [id]
     );
 

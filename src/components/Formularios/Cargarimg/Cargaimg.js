@@ -73,8 +73,16 @@ class Cargaimg extends Component {
       task.Thumb4 || task.Imagen4,
     ];
 
+    let currentUserId = null;
+    try {
+      const stored = localStorage.getItem('user');
+      if (stored) currentUserId = JSON.parse(stored).id;
+    } catch {}
+    const isOwner = currentUserId && task.usuario_id === currentUserId;
+    const linkTo  = isOwner ? '/mi-trastero' : `/De/${task.Nombre}`;
+
     return (
-      <Link to={`/De/${task.Nombre}`}>
+      <Link to={linkTo}>
         <div className="container" align="center" id={task.id}>
           <article className="location-listing">
             <div className="backgroundTitle">

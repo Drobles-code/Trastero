@@ -3,6 +3,8 @@ import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { ThemeContext } from '../context/ThemeContext';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 const getContrastColor = (hexColor) => {
   const hex = (hexColor || '#000000').replace('#', '');
   const r = parseInt(hex.substr(0, 2), 16);
@@ -393,6 +395,19 @@ function Profile({ user, onLogout }) {
     devueltos: 0,
     recomendados: 0,
   });
+  const [trasteroNombre, setTrasteroNombre] = useState('');
+
+  // Cargar nombre del trastero contenedor
+  useEffect(() => {
+    if (!user) return;
+    const token = localStorage.getItem('trastero_token');
+    fetch(`${API_URL}/api/trasteros/contenedor?usuario_id=${user.id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(r => r.ok ? r.json() : [])
+      .then(data => { if (data.length > 0) setTrasteroNombre(data[0].nombre); })
+      .catch(() => {});
+  }, [user]);
 
   // Cargar perfil guardado
   useEffect(() => {
@@ -482,6 +497,11 @@ function Profile({ user, onLogout }) {
           <UserMeta>
             <UserName bg={bg}>{data.nombre || user.name}</UserName>
             <UserEmail bg={bg}>{user.email}</UserEmail>
+            {trasteroNombre && (
+              <TipoBadge accent={acc} style={{ fontSize: 13, width: 'fit-content' }}>
+                🏠 {trasteroNombre}
+              </TipoBadge>
+            )}
             <TipoBadge accent={acc}>
               {data.tipoUsuario === 'empresa' ? '🏢 Empresa' : '👤 Persona'}
             </TipoBadge>
