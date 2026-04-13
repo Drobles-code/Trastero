@@ -372,19 +372,18 @@ function Profile({ user, onLogout, onUserUpdate }) {
   const acc = theme.accent;
 
   const [isEditing, setIsEditing] = useState(false);
-  const [profileData, setProfileData] = useState({
-    nombre: '',
-    telefono: '',
-    tipoUsuario: 'persona',
-    personaContacto: '',
-    tipoVia: 'Calle',
-    nombreVia: '',
-    numero: '',
-    piso: '',
-    puerta: '',
-    codigoPostal: '',
-    pais: 'España',
-    trasteroImg: null,
+  const [profileData, setProfileData] = useState(() => {
+    const defaults = {
+      nombre: user?.name || '', telefono: '', tipoUsuario: 'persona',
+      personaContacto: '', tipoVia: 'Calle', nombreVia: '', numero: '',
+      piso: '', puerta: '', codigoPostal: '', pais: 'España', trasteroImg: null,
+    };
+    if (!user) return defaults;
+    try {
+      const saved = localStorage.getItem(`userProfile_${user.id}`);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return defaults;
   });
   const [draft, setDraft] = useState(profileData);
 
@@ -415,23 +414,6 @@ function Profile({ user, onLogout, onUserUpdate }) {
         }
       })
       .catch(() => {});
-  }, [user]);
-
-  // Cargar perfil guardado
-  useEffect(() => {
-    if (!user) return;
-    try {
-      const saved = localStorage.getItem(`userProfile_${user.id}`);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setProfileData(parsed);
-        setDraft(parsed);
-      } else {
-        const base = { ...profileData, nombre: user.name || '' };
-        setProfileData(base);
-        setDraft(base);
-      }
-    } catch (e) { /* sin datos guardados */ }
   }, [user]);
 
   /* ── Pantalla de acceso restringido ── */
