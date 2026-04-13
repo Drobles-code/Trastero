@@ -120,6 +120,7 @@ const SELECT_ARTICULO = `
     d.id, d.trastero_id, d.nombre, d.categoria, d.subcategoria, d.descripcion,
     d.precio, d.negociable, d.acepta_cambio,
     d.km, d.anio, d.combustible, d.cv, d.metros, d.habitaciones, d.banos,
+    t.usuario_id,
     json_agg(
       json_build_object('posicion', i.posicion, 'ruta', i.ruta, 'ruta_thumb', i.ruta_thumb)
       ORDER BY i.posicion
