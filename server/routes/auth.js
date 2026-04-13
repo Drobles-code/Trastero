@@ -115,4 +115,23 @@ router.post('/registro', async (req, res) => {
   }
 });
 
+// PATCH /api/auth/nombre — actualiza el nombre del usuario en la BD
+const authMiddleware = require('../middleware/authMiddleware');
+router.patch('/nombre', authMiddleware, async (req, res) => {
+  const { nombre } = req.body;
+  if (!nombre || !nombre.trim()) {
+    return res.status(400).json({ error: 'El nombre no puede estar vacío' });
+  }
+  try {
+    await pool.query(
+      'UPDATE usuarios SET nombre=$1, updated_at=NOW() WHERE id=$2',
+      [nombre.trim(), req.usuario.id]
+    );
+    res.json({ nombre: nombre.trim() });
+  } catch (err) {
+    console.error('Error en PATCH /api/auth/nombre:', err);
+    res.status(500).json({ error: 'Error al actualizar el nombre' });
+  }
+});
+
 module.exports = router;

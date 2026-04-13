@@ -365,7 +365,7 @@ const TIPOS_VIA = [
 
 /* ─── Componente principal ─────────────────────────────────── */
 
-function Profile({ user, onLogout }) {
+function Profile({ user, onLogout, onUserUpdate }) {
   const navigate = useNavigate();
   const { theme } = useContext(ThemeContext);
   const bg = theme.modalBg;
@@ -474,10 +474,25 @@ function Profile({ user, onLogout }) {
     setProfileData(draft);
     localStorage.setItem(`userProfile_${user.id}`, JSON.stringify(draft));
 
+    const token = localStorage.getItem('trastero_token');
+
+    // Actualizar nombre de usuario en la BD si cambió
+    if (draft.nombre.trim() && draft.nombre.trim() !== user.name) {
+      try {
+        const res = await fetch(`${API_URL}/api/auth/nombre`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ nombre: draft.nombre.trim() }),
+        });
+        if (res.ok && onUserUpdate) {
+          onUserUpdate({ ...user, name: draft.nombre.trim() });
+        }
+      } catch {}
+    }
+
     // Guardar nombre del trastero si cambió
     if (draftTrastero.trim() && draftTrastero.trim() !== trasteroNombre && trasteroId) {
       try {
-        const token = localStorage.getItem('trastero_token');
         const res = await fetch(`${API_URL}/api/trasteros/contenedor/${trasteroId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },

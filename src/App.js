@@ -84,7 +84,7 @@ function AppContent() {
             <Route path="/signup" element={<SignUp />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
-            <Route path="/profile" element={<Profile user={user} onLogout={handleLogout} />} />
+            <Route path="/profile" element={<Profile user={user} onLogout={handleLogout} onUserUpdate={u => { setUser(u); localStorage.setItem('user', JSON.stringify(u)); }} />} />
             <Route path="/mi-trastero" element={<MiTrastero user={user} />} />
             <Route path="/settings" element={<Settings />} />
             {/* Rutas de sistema — sin enlace en navbar */}
