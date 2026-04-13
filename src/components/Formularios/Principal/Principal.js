@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import imagenjson from '../../inicial.json';
 import '../Principal/Principal.css';
 import Buscador from '../Buscador/Buscador';
 import Cargaimg from '../Cargarimg/Cargaimg';
@@ -7,14 +6,13 @@ import Cargaimg from '../Cargarimg/Cargaimg';
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 function Principal() {
-  // Muestra JSON local inmediatamente — sin esperar a la API
-  const [allTasks, setAllTasks] = useState(imagenjson);
-  const [tasks, setTasks]       = useState(imagenjson);
+  const [allTasks, setAllTasks] = useState([]);
+  const [tasks,    setTasks]    = useState([]);
+  const [cargando, setCargando] = useState(true);
 
-  // Intenta actualizar desde API en background (3s timeout)
   useEffect(() => {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 3000);
+    const timeout = setTimeout(() => controller.abort(), 5000);
 
     fetch(`${API_URL}/api/trasteros`, { signal: controller.signal })
       .then(res => {
@@ -25,8 +23,11 @@ function Principal() {
         setAllTasks(data);
         setTasks(data);
       })
-      .catch(() => { /* JSON local ya está visible */ })
-      .finally(() => clearTimeout(timeout));
+      .catch(() => {})
+      .finally(() => {
+        clearTimeout(timeout);
+        setCargando(false);
+      });
   }, []);
 
   // Filtrado local en tiempo real (onChange del buscador)
@@ -52,7 +53,6 @@ function Principal() {
       const data = await res.json();
       setTasks(data);
     } catch {
-      // Si la API falla, usa filtrado local
       filtradoLocal(termino);
     }
   };
@@ -63,9 +63,19 @@ function Principal() {
         <Buscador filtradoLocal={filtradoLocal} buscarEnBD={buscarEnBD} />
       </div>
       <div className='body'>
-        <div className='principal'>
-          {tasks.map(task => <Cargaimg key={task.id || task.Nombre} task={task} />)}
-        </div>
+        {cargando ? (
+          <div style={{ textAlign: 'center', padding: 60, color: '#666', fontSize: 18 }}>
+            ⏳ Cargando...
+          </div>
+        ) : tasks.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: 60, color: '#666', fontSize: 16 }}>
+            📦 No hay artículos publicados aún
+          </div>
+        ) : (
+          <div className='principal'>
+            {tasks.map(task => <Cargaimg key={task.id || task.Nombre} task={task} />)}
+          </div>
+        )}
       </div>
     </div>
   );
