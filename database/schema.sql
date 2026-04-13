@@ -84,8 +84,23 @@ CREATE TABLE IF NOT EXISTS sys_operators (
   last_login TIMESTAMP
 );
 
+-- Categorías de artículos (tabla de referencia)
+CREATE TABLE IF NOT EXISTS categorias (
+  id     SERIAL PRIMARY KEY,
+  nombre VARCHAR(100) UNIQUE NOT NULL
+);
+
+-- Subcategorías (tabla de referencia)
+CREATE TABLE IF NOT EXISTS subcategorias (
+  id           SERIAL PRIMARY KEY,
+  categoria_id INTEGER REFERENCES categorias(id) ON DELETE CASCADE,
+  nombre       VARCHAR(100) NOT NULL,
+  UNIQUE (categoria_id, nombre)
+);
+
 -- Índices
-CREATE INDEX IF NOT EXISTS idx_trasteros_usuario      ON trasteros        (usuario_id);
+CREATE INDEX IF NOT EXISTS idx_subcategorias_cat        ON subcategorias    (categoria_id);
+CREATE INDEX IF NOT EXISTS idx_trasteros_usuario        ON trasteros        (usuario_id);
 CREATE INDEX IF NOT EXISTS idx_imgdetalle_trastero    ON imagenes_detalle (trastero_id);
 CREATE INDEX IF NOT EXISTS idx_imgdetalle_nombre      ON imagenes_detalle (LOWER(nombre));
 CREATE INDEX IF NOT EXISTS idx_imagenes_detalle_id    ON imagenes         (imagenes_detalle_id);

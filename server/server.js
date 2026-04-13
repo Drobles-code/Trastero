@@ -3,9 +3,10 @@ const cors    = require('cors');
 const path    = require('path');
 require('dotenv').config();
 
-const trasteroRoutes = require('./routes/trasteros');
-const authRoutes     = require('./routes/auth');
-const opsRoutes      = require('./routes/ops');
+const trasteroRoutes   = require('./routes/trasteros');
+const authRoutes       = require('./routes/auth');
+const opsRoutes        = require('./routes/ops');
+const categoriasRoutes = require('./routes/categorias');
 
 const app  = express();
 const PORT = process.env.PORT || 5000;
@@ -14,9 +15,10 @@ app.use(cors({ origin: 'http://localhost:3000' }));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
-app.use('/api/trasteros', trasteroRoutes);
-app.use('/api/auth',      authRoutes);
-app.use('/api/ops',       opsRoutes);
+app.use('/api/trasteros',  trasteroRoutes);
+app.use('/api/auth',       authRoutes);
+app.use('/api/ops',        opsRoutes);
+app.use('/api/categorias', categoriasRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

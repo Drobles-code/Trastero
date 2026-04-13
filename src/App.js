@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import styled from 'styled-components';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, ThemeContext } from './context/ThemeContext';
+import { CategoriasProvider } from './context/CategoriasContext';
 import Navbar from './components/Formularios/Header/Navbar';
 import Principal from './components/Formularios/Principal/Principal';
 import De from './components/Formularios/De/De';
@@ -100,7 +101,9 @@ function AppContent() {
 function App() {
   return (
     <ThemeProvider>
-      <AppContent />
+      <CategoriasProvider>
+        <AppContent />
+      </CategoriasProvider>
     </ThemeProvider>
   );
 }

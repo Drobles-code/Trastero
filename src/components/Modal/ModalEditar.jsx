@@ -1,7 +1,8 @@
 import React, { useState, useContext, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { ThemeContext } from '../../context/ThemeContext';
-import { CATEGORIAS, CAMPOS_EXTRA } from '../../constants/categorias';
+import { CategoriasContext } from '../../context/CategoriasContext';
+import { CAMPOS_EXTRA } from '../../constants/categorias';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -154,7 +155,8 @@ const SaveBtn = styled.button`
 const Divider = styled.hr`border: none; border-top: 1px solid ${p => p.accent}22; margin: 2px 0;`;
 
 function ModalEditar({ isOpen, onClose, onGuardado, trastero }) {
-  const { theme } = useContext(ThemeContext);
+  const { theme }    = useContext(ThemeContext);
+  const categoriasDB = useContext(CategoriasContext);
   const bg  = theme.modalBg || '#1a1a1a';
   const acc = theme.accent;
   const txt = getContrast(bg);
@@ -195,7 +197,7 @@ function ModalEditar({ isOpen, onClose, onGuardado, trastero }) {
 
   if (!isOpen || !trastero) return null;
 
-  const catSubs  = (CATEGORIAS.find(c => c.label === categoria) || {}).subs || [];
+  const catSubs  = ((categoriasDB.find(c => c.nombre === categoria) || {}).subs || []).map(s => s.nombre);
   const camposEx = CAMPOS_EXTRA[categoria] || [];
 
   const reset = () => {
@@ -283,7 +285,7 @@ function ModalEditar({ isOpen, onClose, onGuardado, trastero }) {
             <Select bg={bg} color={txt} accent={acc} value={categoria} style={{ marginTop: 6 }}
               onChange={e => { setCategoria(e.target.value); setSubcategoria(''); }}>
               <option value="">Sin categoría</option>
-              {CATEGORIAS.map(c => <option key={c.label} value={c.label}>{c.label}</option>)}
+              {categoriasDB.map(c => <option key={c.id} value={c.nombre}>{c.nombre}</option>)}
             </Select>
           </div>
           <div>

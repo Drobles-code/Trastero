@@ -1,7 +1,8 @@
 import React, { useState, useContext, useRef } from 'react';
 import styled from 'styled-components';
 import { ThemeContext } from '../../context/ThemeContext';
-import { CATEGORIAS, CAMPOS_EXTRA } from '../../constants/categorias';
+import { CategoriasContext } from '../../context/CategoriasContext';
+import { CAMPOS_EXTRA } from '../../constants/categorias';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -152,7 +153,8 @@ const PublishBtn = styled.button`
 const Divider = styled.hr`border: none; border-top: 1px solid ${p => p.accent}22; margin: 2px 0;`;
 
 function ModalSubir({ isOpen, onClose, onPublicado, trasteroId }) {
-  const { theme } = useContext(ThemeContext);
+  const { theme }    = useContext(ThemeContext);
+  const categoriasDB = useContext(CategoriasContext);
   const bg  = theme.modalBg || '#1a1a1a';
   const acc = theme.accent;
   const txt = getContrast(bg);
@@ -175,7 +177,7 @@ function ModalSubir({ isOpen, onClose, onPublicado, trasteroId }) {
 
   if (!isOpen) return null;
 
-  const catSubs  = (CATEGORIAS.find(c => c.label === categoria) || {}).subs || [];
+  const catSubs  = ((categoriasDB.find(c => c.nombre === categoria) || {}).subs || []).map(s => s.nombre);
   const camposEx = CAMPOS_EXTRA[categoria] || [];
 
   const reset = () => {
@@ -260,7 +262,7 @@ function ModalSubir({ isOpen, onClose, onPublicado, trasteroId }) {
             <Select bg={bg} color={txt} accent={acc} value={categoria}
               onChange={e => { setCategoria(e.target.value); setSubcategoria(''); setExtras({}); }}>
               <option value="">Selecciona una categoría</option>
-              {CATEGORIAS.map(c => <option key={c.label} value={c.label}>{c.label}</option>)}
+              {categoriasDB.map(c => <option key={c.id} value={c.nombre}>{c.nombre}</option>)}
             </Select>
           </div>
           {catSubs.length > 0 && (
