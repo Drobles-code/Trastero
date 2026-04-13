@@ -39,3 +39,6 @@ RESPALDO_*
 
 # excepcion: el backup principal SÍ va al repo
 !database/trastero_latest.sql
+
+# imágenes subidas por usuarios
+server/public/uploads/
