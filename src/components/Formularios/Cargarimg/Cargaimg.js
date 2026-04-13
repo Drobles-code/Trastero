@@ -93,7 +93,7 @@ class Cargaimg extends Component {
                   alt={task.Nombre}
                   loading="lazy"
                 />
-                {task.Nombre}
+                {task.trastero_nombre || task.Nombre}
               </p>
             </div>
             <AdaptiveGrid ruta={task.Ruta} imgs={imgs} thumbs={thumbs} />
