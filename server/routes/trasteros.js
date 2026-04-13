@@ -181,6 +181,27 @@ router.get('/contenedor', authMiddleware, async (req, res) => {
   }
 });
 
+// ── PUT /api/trasteros/contenedor/:id ────────────────────────
+// Actualiza el nombre del trastero-contenedor del usuario
+router.put('/contenedor/:id', authMiddleware, async (req, res) => {
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
+  const { nombre } = req.body;
+  if (!nombre || !nombre.trim()) return res.status(400).json({ error: 'El nombre es obligatorio' });
+  try {
+    const row = await pool.query(
+      'SELECT id FROM trasteros WHERE id=$1 AND usuario_id=$2',
+      [id, req.usuario.id]
+    );
+    if (row.rows.length === 0) return res.status(403).json({ error: 'Sin permiso' });
+    await pool.query('UPDATE trasteros SET nombre=$1 WHERE id=$2', [nombre.trim(), id]);
+    res.json({ ok: true, nombre: nombre.trim() });
+  } catch (err) {
+    console.error('Error en PUT /api/trasteros/contenedor/:id:', err);
+    res.status(500).json({ error: 'Error al actualizar el nombre' });
+  }
+});
+
 // ── GET /api/trasteros/publico/:trasteroNombre ────────────────
 // Devuelve todos los artículos de un trastero por nombre (vista pública)
 router.get('/publico/:trasteroNombre', async (req, res) => {

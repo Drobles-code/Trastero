@@ -395,7 +395,9 @@ function Profile({ user, onLogout }) {
     devueltos: 0,
     recomendados: 0,
   });
-  const [trasteroNombre, setTrasteroNombre] = useState('');
+  const [trasteroNombre,  setTrasteroNombre]  = useState('');
+  const [trasteroId,      setTrasteroId]      = useState(null);
+  const [draftTrastero,   setDraftTrastero]   = useState('');
 
   // Cargar nombre del trastero contenedor
   useEffect(() => {
@@ -405,7 +407,13 @@ function Profile({ user, onLogout }) {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(r => r.ok ? r.json() : [])
-      .then(data => { if (data.length > 0) setTrasteroNombre(data[0].nombre); })
+      .then(data => {
+        if (data.length > 0) {
+          setTrasteroNombre(data[0].nombre);
+          setDraftTrastero(data[0].nombre);
+          setTrasteroId(data[0].id);
+        }
+      })
       .catch(() => {});
   }, [user]);
 
@@ -452,17 +460,33 @@ function Profile({ user, onLogout }) {
 
   const handleEdit = () => {
     setDraft(profileData);
+    setDraftTrastero(trasteroNombre);
     setIsEditing(true);
   };
 
   const handleCancel = () => {
     setDraft(profileData);
+    setDraftTrastero(trasteroNombre);
     setIsEditing(false);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setProfileData(draft);
     localStorage.setItem(`userProfile_${user.id}`, JSON.stringify(draft));
+
+    // Guardar nombre del trastero si cambió
+    if (draftTrastero.trim() && draftTrastero.trim() !== trasteroNombre && trasteroId) {
+      try {
+        const token = localStorage.getItem('trastero_token');
+        const res = await fetch(`${API_URL}/api/trasteros/contenedor/${trasteroId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ nombre: draftTrastero.trim() }),
+        });
+        if (res.ok) setTrasteroNombre(draftTrastero.trim());
+      } catch {}
+    }
+
     setIsEditing(false);
   };
 
@@ -497,11 +521,25 @@ function Profile({ user, onLogout }) {
           <UserMeta>
             <UserName bg={bg}>{data.nombre || user.name}</UserName>
             <UserEmail bg={bg}>{user.email}</UserEmail>
-            {trasteroNombre && (
+            {isEditing ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                <span style={{ fontSize: 15 }}>🏠</span>
+                <Input
+                  type="text"
+                  value={draftTrastero}
+                  onChange={e => setDraftTrastero(e.target.value)}
+                  placeholder="Nombre de tu trastero"
+                  editing={true}
+                  bg={bg}
+                  accent={acc}
+                  style={{ width: 180, padding: '4px 10px', fontSize: 13 }}
+                />
+              </div>
+            ) : trasteroNombre ? (
               <TipoBadge accent={acc} style={{ fontSize: 13, width: 'fit-content' }}>
                 🏠 {trasteroNombre}
               </TipoBadge>
-            )}
+            ) : null}
             <TipoBadge accent={acc}>
               {data.tipoUsuario === 'empresa' ? '🏢 Empresa' : '👤 Persona'}
             </TipoBadge>
