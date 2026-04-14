@@ -563,8 +563,25 @@ function TrasteroCard({ task, onDelete, onOpen, onEdit, theme }) {
     : null;
   const extra = formatExtra(task.Extras);
 
+  const titleBg  = theme.cardTitle || '#1a1a2e';
+  const titleTxt = getContrastColor(titleBg);
+
   return (
     <CardWrapper bg={bg} accent={acc} onClick={() => onOpen(task)}>
+      {/* ── Barra de título ── */}
+      <div style={{
+        background: titleBg,
+        color: titleTxt,
+        padding: '8px 12px',
+        fontSize: 14,
+        fontWeight: 700,
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+      }}>
+        {task.Nombre}
+      </div>
+
       {/* ── Grid de imágenes con overlay hover ── */}
       <div style={{ position: 'relative' }}>
         <AdaptiveGrid
@@ -586,7 +603,6 @@ function TrasteroCard({ task, onDelete, onOpen, onEdit, theme }) {
       {/* ── Datos del artículo ── */}
       <FlatInfo>
         {precio && <CardPrice accent={acc}>{precio}</CardPrice>}
-        <CardNombre color={txt}>{task.Nombre}</CardNombre>
         {task.Descripcion && <CardDesc color={txt}>{task.Descripcion}</CardDesc>}
         {extra && <CardExtras color={txt}>{extra}</CardExtras>}
         {(task.AceptaCambio || task.Negociable) && (
