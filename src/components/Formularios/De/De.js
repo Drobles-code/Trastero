@@ -368,6 +368,49 @@ const LbDot = styled.button`
   padding: 0; transition: background 0.2s;
 `;
 
+/* ── Toggle + Vista plana ────────────────────────────────────── */
+
+const ToggleBtn = styled.button`
+  background: transparent;
+  color: ${p => p.accent};
+  border: 1px solid ${p => p.accent}88;
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+  &:hover { background: ${p => p.accent}22; }
+`;
+
+const FlatGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 249px);
+  justify-content: center;
+  gap: 10px;
+`;
+
+const FlatCard = styled.div`
+  position: relative;
+  width: 249px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: ${p => p.bg};
+  border: 2px solid rgb(247, 247, 251);
+  cursor: pointer;
+  &:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.35); }
+`;
+
+const FlatImg = styled.img`
+  width: 100%;
+  height: 185px;
+  object-fit: cover;
+  display: block;
+`;
+
 /* ── Estado vacío ────────────────────────────────────────────── */
 
 const EmptyState = styled.div`
@@ -382,11 +425,12 @@ export default function De() {
   const navigate        = useNavigate();
   const { theme }       = useContext(ThemeContext);
 
-  const [arts,    setArts]   = useState([]);
-  const [cargando, setCarg]  = useState(true);
-  const [error,   setError]  = useState(null);
-  const [detalle, setDetalle] = useState(null);
-  const [lb,      setLb]     = useState(null); // { imgs, idx }
+  const [arts,       setArts]      = useState([]);
+  const [cargando,   setCarg]      = useState(true);
+  const [error,      setError]     = useState(null);
+  const [detalle,    setDetalle]   = useState(null);
+  const [lb,         setLb]        = useState(null); // { imgs, idx }
+  const [vistaPlana, setVistaPlana] = useState(false);
 
   const acc = theme.accent    || '#667eea';
   const bg  = theme.modalBg   || '#1a1a1a';
@@ -489,7 +533,28 @@ export default function De() {
             )}
           </HeaderMeta>
         </HeaderLeft>
-        <BackBtn accent={acc} onClick={() => navigate(-1)}>← Volver</BackBtn>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {arts.length > 0 && (
+            <ToggleBtn accent={acc} onClick={() => setVistaPlana(v => !v)}
+              title={vistaPlana ? 'Ver en grupo' : 'Ver todas las imágenes'}>
+              {vistaPlana ? (
+                <><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <rect x="1" y="1" width="6" height="6" rx="1"/>
+                  <rect x="9" y="1" width="6" height="6" rx="1"/>
+                  <rect x="1" y="9" width="6" height="6" rx="1"/>
+                  <rect x="9" y="9" width="6" height="6" rx="1"/>
+                </svg>Grupo</>
+              ) : (
+                <><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <rect x="1" y="2" width="14" height="2" rx="1"/>
+                  <rect x="1" y="7" width="14" height="2" rx="1"/>
+                  <rect x="1" y="12" width="14" height="2" rx="1"/>
+                </svg>Todas</>
+              )}
+            </ToggleBtn>
+          )}
+          <BackBtn accent={acc} onClick={() => navigate(-1)}>← Volver</BackBtn>
+        </div>
       </HeaderCard>
 
       {/* ── Contenido ── */}
@@ -509,6 +574,31 @@ export default function De() {
           <p style={{ color: txt, fontSize: 18, fontWeight: 700, margin: 0 }}>Este trastero está vacío</p>
           <p style={{ color: txt + '88', margin: 0 }}>Aún no hay artículos publicados</p>
         </EmptyState>
+      ) : vistaPlana ? (
+        <FlatGrid>
+          {arts.flatMap(task =>
+            [task.Imagen1, task.Imagen2, task.Imagen3, task.Imagen4]
+              .filter(Boolean)
+              .map((img, i) => {
+                const allImgs = [task.Imagen1, task.Imagen2, task.Imagen3, task.Imagen4]
+                  .filter(Boolean).map(n => `${task.Ruta}/${n}`);
+                return (
+                  <FlatCard key={`${task.id}-${i}`} bg={bg}
+                    onClick={() => setLb({ imgs: allImgs, idx: i })}>
+                    <FlatImg src={`${task.Ruta}/${img}`} alt={task.Nombre} loading="lazy" />
+                    <CardInfo>
+                      <CardNombre color={getContrast(bg)}>{task.Nombre}</CardNombre>
+                      {task.Precio !== null && task.Precio !== undefined && (
+                        <CardPrice accent={acc}>
+                          {task.Precio.toLocaleString('es-ES', { minimumFractionDigits: 0 })} €
+                        </CardPrice>
+                      )}
+                    </CardInfo>
+                  </FlatCard>
+                );
+              })
+          )}
+        </FlatGrid>
       ) : (
         <Grid>
           {arts.map(task => (
