@@ -205,23 +205,24 @@ function TrasteroCard({ task, theme, onOpen }) {
 
   return (
     <CardWrapper bg={bg} onClick={() => onOpen(task)}>
+      <div style={{
+        background: theme.cardTitle || '#1a1a2e',
+        color: getContrast(theme.cardTitle || '#1a1a2e'),
+        padding: '8px 12px',
+        fontSize: 17,
+        fontWeight: 700,
+        textAlign: 'center',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+      }}>
+        {task.Nombre}
+      </div>
       <div style={{ position: 'relative' }}>
-        <div className="backgroundTitle" style={{ background: `linear-gradient(135deg, ${acc}cc, ${acc}88)`, padding: '8px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <img
-            style={{ width: 20, height: 20, borderRadius: 4, objectFit: 'cover', flexShrink: 0 }}
-            src={`${task.Ruta}/${task.Thumb1 || task.Imagen1}`}
-            alt=""
-            loading="lazy"
-          />
-          <span style={{ color: '#fff', fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {task.Nombre}
-          </span>
-        </div>
         <AdaptiveGrid ruta={task.Ruta} imgs={imgs} thumbs={thumbs} />
       </div>
       <CardInfo>
         {precio && <CardPrice accent={acc}>{precio}</CardPrice>}
-        <CardNombre color={txt}>{task.Nombre}</CardNombre>
         {task.Descripcion && <CardDesc color={txt}>{task.Descripcion}</CardDesc>}
         {extra && <div style={{ fontSize: 12, color: txt, opacity: 0.75 }}>{extra}</div>}
         {(task.AceptaCambio || task.Negociable) && (
