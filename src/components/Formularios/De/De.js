@@ -209,7 +209,7 @@ function TrasteroCard({ task, theme, onOpen }) {
         background: theme.cardTitle || '#1a1a2e',
         color: getContrast(theme.cardTitle || '#1a1a2e'),
         padding: '8px 12px',
-        fontSize: 17,
+        fontSize: 20,
         fontWeight: 700,
         textAlign: 'center',
         whiteSpace: 'nowrap',
