@@ -81,6 +81,18 @@ const CountBadge = styled.div`
   font-weight: 500;
 `;
 
+const HeaderRight = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`;
+
+const CountBadge = styled.div`
+  color: ${p => p.accent};
+  font-size: 14px;
+  font-weight: 500;
+`;
+
 /* ── Grid ────────────────────────────────────────────────────── */
 
 const Grid = styled.div`
@@ -526,14 +538,14 @@ export default function De() {
         <HeaderLeft>
           <HeaderMeta>
             <TrasteroName bg={bg}>🏠 {nombre}</TrasteroName>
-            {!cargando && (
-              <TrasteroSub bg={bg}>
-                {arts.length} {arts.length === 1 ? 'artículo' : 'artículos'}
-              </TrasteroSub>
-            )}
           </HeaderMeta>
         </HeaderLeft>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <HeaderRight>
+          {!cargando && (
+            <CountBadge accent={acc}>
+              📦 {arts.length} {arts.length === 1 ? 'artículo' : 'artículos'}
+            </CountBadge>
+          )}
           {arts.length > 0 && (
             <ToggleBtn accent={acc} onClick={() => setVistaPlana(v => !v)}
               title={vistaPlana ? 'Ver en grupo' : 'Ver todas las imágenes'}>
@@ -554,7 +566,7 @@ export default function De() {
             </ToggleBtn>
           )}
           <BackBtn accent={acc} onClick={() => navigate(-1)}>← Volver</BackBtn>
-        </div>
+        </HeaderRight>
       </HeaderCard>
 
       {/* ── Contenido ── */}
