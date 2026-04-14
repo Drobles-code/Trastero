@@ -573,7 +573,7 @@ function TrasteroCard({ task, onDelete, onOpen, onEdit, theme }) {
         background: titleBg,
         color: titleTxt,
         padding: '8px 12px',
-        fontSize: 14,
+        fontSize: 17,
         fontWeight: 700,
         whiteSpace: 'nowrap',
         overflow: 'hidden',
