@@ -24,19 +24,34 @@ CREATE TABLE IF NOT EXISTS trasteros (
   created_at  TIMESTAMP DEFAULT NOW()
 );
 
+-- Categorías de artículos
+CREATE TABLE IF NOT EXISTS categorias (
+  id     SERIAL PRIMARY KEY,
+  label  VARCHAR(100) UNIQUE NOT NULL,
+  orden  INTEGER DEFAULT 0
+);
+
+-- Subcategorías — relacionadas con su categoría padre
+CREATE TABLE IF NOT EXISTS subcategorias (
+  id           SERIAL PRIMARY KEY,
+  label        VARCHAR(100) NOT NULL,
+  categoria_id INTEGER NOT NULL REFERENCES categorias(id) ON DELETE CASCADE,
+  orden        INTEGER DEFAULT 0,
+  UNIQUE (categoria_id, label)
+);
+
 -- Imagenes_detalle — artículos dentro de un trastero
 -- Cada artículo pertenece a un trastero
 CREATE TABLE IF NOT EXISTS imagenes_detalle (
-  id            SERIAL PRIMARY KEY,
-  trastero_id   INTEGER REFERENCES trasteros(id) ON DELETE CASCADE,
-  nombre        VARCHAR(255) NOT NULL,
-  descripcion   TEXT,
-  precio        DECIMAL(10,2),
-  negociable    BOOLEAN DEFAULT FALSE,
-  acepta_cambio BOOLEAN DEFAULT FALSE,
-  categoria     VARCHAR(100),
-  subcategoria  VARCHAR(100),
-  -- extras como columnas tipadas (antes JSONB en trasteros)
+  id               SERIAL PRIMARY KEY,
+  trastero_id      INTEGER REFERENCES trasteros(id) ON DELETE CASCADE,
+  nombre           VARCHAR(255) NOT NULL,
+  descripcion      TEXT,
+  precio           DECIMAL(10,2),
+  negociable       BOOLEAN DEFAULT FALSE,
+  acepta_cambio    BOOLEAN DEFAULT FALSE,
+  subcategoria_id  INTEGER REFERENCES subcategorias(id),
+  -- extras como columnas tipadas
   km            INTEGER,
   anio          INTEGER,
   combustible   VARCHAR(50),
@@ -84,24 +99,11 @@ CREATE TABLE IF NOT EXISTS sys_operators (
   last_login TIMESTAMP
 );
 
--- Categorías de artículos (tabla de referencia)
-CREATE TABLE IF NOT EXISTS categorias (
-  id     SERIAL PRIMARY KEY,
-  nombre VARCHAR(100) UNIQUE NOT NULL
-);
-
--- Subcategorías (tabla de referencia)
-CREATE TABLE IF NOT EXISTS subcategorias (
-  id           SERIAL PRIMARY KEY,
-  categoria_id INTEGER REFERENCES categorias(id) ON DELETE CASCADE,
-  nombre       VARCHAR(100) NOT NULL,
-  UNIQUE (categoria_id, nombre)
-);
-
 -- Índices
 CREATE INDEX IF NOT EXISTS idx_subcategorias_cat        ON subcategorias    (categoria_id);
 CREATE INDEX IF NOT EXISTS idx_trasteros_usuario        ON trasteros        (usuario_id);
 CREATE INDEX IF NOT EXISTS idx_imgdetalle_trastero    ON imagenes_detalle (trastero_id);
 CREATE INDEX IF NOT EXISTS idx_imgdetalle_nombre      ON imagenes_detalle (LOWER(nombre));
+CREATE INDEX IF NOT EXISTS idx_imgdetalle_subcat      ON imagenes_detalle (subcategoria_id);
 CREATE INDEX IF NOT EXISTS idx_imagenes_detalle_id    ON imagenes         (imagenes_detalle_id);
 CREATE INDEX IF NOT EXISTS idx_imagenes_trastero      ON imagenes         (trastero_id);
