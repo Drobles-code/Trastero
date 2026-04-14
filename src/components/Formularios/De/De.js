@@ -87,12 +87,6 @@ const HeaderRight = styled.div`
   gap: 12px;
 `;
 
-const CountBadge = styled.div`
-  color: ${p => p.accent};
-  font-size: 14px;
-  font-weight: 500;
-`;
-
 /* ── Grid ────────────────────────────────────────────────────── */
 
 const Grid = styled.div`
