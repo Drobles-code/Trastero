@@ -31,7 +31,9 @@ Campos extra tipados (antes JSONB):
 - Inmobiliaria: `metros DECIMAL, habitaciones INTEGER, banos INTEGER`
 
 ### imagenes
-`id, imagenes_detalle_id → imagenes_detalle (CASCADE), trastero_id → trasteros (FK redundante, confirmado), ruta, posicion CHECK(1-4), created_at`
+`id, imagenes_detalle_id → imagenes_detalle (CASCADE), trastero_id → trasteros (FK redundante, confirmado), ruta, ruta_thumb, posicion CHECK(1-4), created_at`
+- `ruta` — URL completa al original JPG/PNG
+- `ruta_thumb` — URL completa al thumbnail WebP (null si imagen antigua antes del sistema de thumbs)
 
 ### preferencias_usuario
 `id, usuario_id UNIQUE, bg_color, text_color, accent_color, modal_color, card_title, navbar_color, updated_at`

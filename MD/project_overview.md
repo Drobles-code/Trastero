@@ -39,7 +39,8 @@ server/
 database/
   schema.sql                     — esquema v2
   seed.sql                       — datos de prueba
-  backup_trastero_*.backup       — respaldos pg_dump (ignorados por git)
+  trastero_latest.sql            — backup completo BD (se sube al repo, se restaura con actualizar.bat)
+  backup_trastero_*.backup       — respaldos pg_dump binarios (ignorados por git)
 SETUP.bat                        — configuración primer uso en PC nuevo
 actualizar.bat                   — git pull + npm install (para actualizar el proyecto)
 iniciar.bat                      — arrancar backend + frontend
