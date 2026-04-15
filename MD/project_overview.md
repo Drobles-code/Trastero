@@ -21,20 +21,23 @@ App React + Node/Express + PostgreSQL para venta de artículos de segunda mano. 
 ## Estructura de carpetas
 ```
 src/
-  constants/categorias.js        — árbol categorías + CAMPOS_EXTRA + formatExtra()
+  constants/categorias.js        — CAMPOS_EXTRA + formatExtra() (árbol categorías como fallback)
   context/ThemeContext.js        — tema global (background, modalBg, accent, navbar, cardTitle)
+  context/CategoriasContext.js   — categorías desde BD (con fallback a JS si API falla)
   components/Modal/
     ModalSubir.jsx               — crear artículo
     ModalEditar.jsx              — editar artículo
   components/Formularios/
-    Cargarimg/Cargaimg.js        — tarjeta pública (página principal)
+    Cargarimg/Cargaimg.js        — tarjeta pública (página principal, muestra nombre trastero)
     Principal/Principal.js       — grid página pública
-    De/De.js                     — detalle artículo
+    De/De.js                     — vista pública de trastero (toggle Grupo/Todas, modal, lightbox)
   pages/MiTrastero.jsx           — área privada del usuario
 server/
   server.js
   routes/trasteros.js            — CRUD artículos
   routes/auth.js                 — login + registro
+  routes/categorias.js           — GET /api/categorias (árbol desde BD)
+  routes/ops.js                  — panel operadores sistema
   middleware/authMiddleware.js
 database/
   schema.sql                     — esquema v2
@@ -46,13 +49,16 @@ actualizar.bat                   — git pull + npm install (para actualizar el 
 iniciar.bat                      — arrancar backend + frontend
 ```
 
-## Estado (2026-04-12)
+## Estado (2026-04-15)
 - CRUD artículos completo, BD migrada a esquema v2
 - Campos tipados por categoría (Motor, Inmobiliaria)
 - Tema personalizable por usuario (ThemeContext + preferencias_usuario en BD)
 - Lightbox conectado al modal de detalle en MiTrastero (click foto → galería fullscreen)
 - SETUP.bat para configurar el proyecto en un PC nuevo desde cero
 - server/.env excluido del repo (credenciales seguras, usar server/.env.example como plantilla)
+- Categorías y subcategorías en BD (tablas `categorias` + `subcategorias`), servidas por `GET /api/categorias`
+- De.js: vista pública completa de trastero con toggle Grupo/Todas, modal detalle y lightbox
+- Coherencia visual tarjetas: título del artículo en barra superior (20px centrado, theme.cardTitle) en MiTrastero y De.js
 
 ## Pendiente al actualizar
 > Revisar esta sección cada vez que hagas `actualizar.bat` en otro PC.
@@ -61,9 +67,7 @@ iniciar.bat                      — arrancar backend + frontend
 _(sin pendientes por ahora)_
 
 ## Próximos pasos
-- Categorías dinámicas desde BD (tabla `categorias`)
 - Ubicación física del trastero (campo `ciudad`/coordenadas en tabla `trasteros`)
 - Buscador global persistente en topnav
-- Vista pública del marketplace conectada a BD real (Principal + De.js usan Pixabay como placeholder)
 - Responsive / mobile
 - Múltiples trasteros por usuario (selector en Mi Trastero)

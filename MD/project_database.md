@@ -9,9 +9,13 @@ type: project
 ## Relaciones
 ```
 usuarios
-  └─ trasteros        (espacios físicos: garaje, tienda, local...)
+  └─ trasteros           (espacios físicos: garaje, tienda, local...)
        └─ imagenes_detalle  (artículos: lo que se vende)
             └─ imagenes     (fotos del artículo, posicion 1-4)
+
+categorias
+  └─ subcategorias
+       └─ imagenes_detalle (subcategoria_id FK)
 ```
 
 ## Tablas
@@ -24,9 +28,19 @@ usuarios
 - Un usuario puede tener varios trasteros
 - Al registrar usuario → se auto-crea "Mi Trastero" (auth.js)
 
+### categorias
+`id, label VARCHAR(100) UNIQUE, orden INTEGER`
+- 15 categorías (Motor, Inmobiliaria, Informática, ...)
+- Servidas por `GET /api/categorias`
+
+### subcategorias
+`id, label VARCHAR(100), categoria_id → categorias, orden INTEGER`
+- ~91 subcategorías en total
+- UNIQUE (categoria_id, label)
+
 ### imagenes_detalle (artículos)
-`id, trastero_id → trasteros, nombre, descripcion, precio, negociable, acepta_cambio, categoria, subcategoria, created_at, updated_at`
-Campos extra tipados (antes JSONB):
+`id, trastero_id → trasteros, nombre, descripcion, precio, negociable, acepta_cambio, categoria, subcategoria, subcategoria_id → subcategorias, created_at, updated_at`
+Campos extra tipados:
 - Motor: `km INTEGER, anio INTEGER, combustible VARCHAR, cv INTEGER`
 - Inmobiliaria: `metros DECIMAL, habitaciones INTEGER, banos INTEGER`
 
@@ -54,8 +68,9 @@ Campos extra tipados (antes JSONB):
 **Paso 1** — borrar tablas viejas:
 ```sql
 DROP TABLE IF EXISTS imagenes CASCADE;
-DROP TABLE IF EXISTS trastero_categorias CASCADE;
 DROP TABLE IF EXISTS imagenes_detalle CASCADE;
+DROP TABLE IF EXISTS subcategorias CASCADE;
+DROP TABLE IF EXISTS categorias CASCADE;
 DROP TABLE IF EXISTS trasteros CASCADE;
 ```
 

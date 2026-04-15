@@ -10,15 +10,24 @@ type: project
 - `server/server.js` — Express + cors + error handler JSON global
 - `server/routes/trasteros.js` — CRUD artículos
 - `server/routes/auth.js` — login + registro
+- `server/routes/categorias.js` — GET /api/categorias (árbol desde BD)
+- `server/routes/ops.js` — panel operadores sistema
 - `server/middleware/authMiddleware.js` — JWT verify
 - `server/db.js` — pool pg
 
-## Endpoints `/api/trasteros`
+## Endpoints
 
+### `/api/categorias`
+| Método | Ruta | Auth | Descripción |
+|--------|------|------|-------------|
+| GET | `/api/categorias` | No | Árbol completo categorías + subcategorías ordenado |
+
+### `/api/trasteros`
 | Método | Ruta | Auth | Descripción |
 |--------|------|------|-------------|
 | GET | `/api/trasteros` | No | Lista artículos. Query: `?q=texto&usuario_id=X` |
 | GET | `/api/trasteros/contenedor` | Sí | Trasteros-contenedor del usuario |
+| GET | `/api/trasteros/publico/:nombre` | No | Todos los artículos de un trastero por nombre |
 | GET | `/api/trasteros/:nombre` | No | Artículo por nombre |
 | POST | `/api/trasteros` | Sí | Crear artículo (multipart/form-data) |
 | PUT | `/api/trasteros/:id` | Sí | Editar artículo (multipart/form-data) |

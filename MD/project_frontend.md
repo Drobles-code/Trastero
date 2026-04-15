@@ -9,7 +9,7 @@ type: project
 ## Páginas principales
 - `src/pages/MiTrastero.jsx` — área privada, requiere login
 - `src/components/Formularios/Principal/Principal.js` — página pública, grid de artículos
-- `src/components/Formularios/De/De.js` — detalle de artículo
+- `src/components/Formularios/De/De.js` — vista pública de trastero: toggle Grupo/Todas, modal detalle, lightbox
 
 ## Tema global — ThemeContext
 `src/context/ThemeContext.js`
@@ -64,7 +64,13 @@ const thumbs = [
 - `CountBadge` — texto plano con color `accent`, sin pill/borde
 - `FlatInfo` tiene `border-top: 2px solid rgb(247,247,251)` (separador imágenes/texto)
 - Fetcha `trasteroId` en `useEffect` → `GET /api/trasteros/contenedor` → pasa a `<ModalSubir>`
-- Vista grupo (defecto) + Vista plana (toggle)
+- Vista grupo (defecto) + Vista plana (toggle, igual que De.js)
+
+### TrasteroCard — estructura tarjeta
+- **Barra de título** arriba: `theme.cardTitle`, 20px centrado, nombre del artículo (sin repetirse abajo)
+- **AdaptiveGrid** — fotos debajo del título
+- **FlatInfo** — precio, descripción, extras, badges (ya NO incluye CardNombre)
+- Hover overlay con botones Editar / Eliminar
 
 ### Lightbox (galería fullscreen)
 - Estado: `const [lightbox, setLightbox] = useState(null); // { imgs: [], idx: 0 }`
@@ -117,8 +123,14 @@ const thumbs = [
 - **Mobile (≤768px)**: `max-width: 90%` · `padding: 55px 20px 30px`
 - **CloseButton**: `36×36px`
 
-## Categorías y campos extra
-`src/constants/categorias.js`
+## Categorías
+### CategoriasContext (`src/context/CategoriasContext.js`)
+- Carga categorías desde `GET /api/categorias` al montar la app
+- Fallback al array de `categorias.js` si la API falla
+- Formato normalizado: `{ id, nombre, subs: [{ id, nombre }] }`
+- Consumido por `ModalSubir` y `ModalEditar` vía `useContext(CategoriasContext)`
+
+### Campos extra (`src/constants/categorias.js`)
 - `CAMPOS_EXTRA` — campos dinámicos por categoría (Motor: km/anio/combustible/cv; Inmobiliaria: metros/habitaciones/banos)
 - `formatExtra(extras)` — formatea para mostrar en tarjeta
 
