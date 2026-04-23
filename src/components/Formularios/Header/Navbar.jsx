@@ -1,12 +1,13 @@
-import React, { useState, useContext, useEffect, useRef } from 'react';
+import React, { useState, useContext, useEffect, useRef, lazy, Suspense } from 'react';
 import styled from 'styled-components';
 import { Link, useNavigate } from 'react-router-dom';
 import { ThemeContext } from '../../../context/ThemeContext';
-import ModalLogin from '../../Modal/ModalLogin';
-import SignInContent from '../../Auth/SignInContent';
-import SignUpContent from '../../Auth/SignUpContent';
-import ContactContent from '../../Content/ContactContent';
-import AboutContent from '../../Content/AboutContent';
+
+const ModalLogin     = lazy(() => import('../../Modal/ModalLogin'));
+const SignInContent  = lazy(() => import('../../Auth/SignInContent'));
+const SignUpContent  = lazy(() => import('../../Auth/SignUpContent'));
+const ContactContent = lazy(() => import('../../Content/ContactContent'));
+const AboutContent   = lazy(() => import('../../Content/AboutContent'));
 
 const NavBar = styled.nav`
   background: ${props => props.navbarColor};
@@ -243,30 +244,36 @@ function Navbar({ user, onLogout, onLogin }) {
 
   return (
     <>
-      <ModalLogin isOpen={showSignInModal} onClose={() => {
-        setShowSignInModal(false);
-        setAuthMode('signin'); // Resetear al modo signin cuando se cierre el modal
-      }}>
-        {authMode === 'signin' ? (
-          <SignInContent
-            onLogin={handleSignInSuccess}
-            onSwitchToSignUp={() => setAuthMode('signup')}
-          />
-        ) : (
-          <SignUpContent
-            onSignUp={handleSignUpSuccess}
-            onSwitchToSignIn={() => setAuthMode('signin')}
-          />
-        )}
-      </ModalLogin>
+      <Suspense fallback={null}>
+        <ModalLogin isOpen={showSignInModal} onClose={() => {
+          setShowSignInModal(false);
+          setAuthMode('signin');
+        }}>
+          {authMode === 'signin' ? (
+            <SignInContent
+              onLogin={handleSignInSuccess}
+              onSwitchToSignUp={() => setAuthMode('signup')}
+            />
+          ) : (
+            <SignUpContent
+              onSignUp={handleSignUpSuccess}
+              onSwitchToSignIn={() => setAuthMode('signin')}
+            />
+          )}
+        </ModalLogin>
+      </Suspense>
 
-      <ModalLogin isOpen={showAboutModal} onClose={() => setShowAboutModal(false)}>
-        <AboutContent />
-      </ModalLogin>
+      <Suspense fallback={null}>
+        <ModalLogin isOpen={showAboutModal} onClose={() => setShowAboutModal(false)}>
+          <AboutContent />
+        </ModalLogin>
+      </Suspense>
 
-      <ModalLogin isOpen={showContactModal} onClose={() => setShowContactModal(false)}>
-        <ContactContent onClose={() => setShowContactModal(false)} />
-      </ModalLogin>
+      <Suspense fallback={null}>
+        <ModalLogin isOpen={showContactModal} onClose={() => setShowContactModal(false)}>
+          <ContactContent onClose={() => setShowContactModal(false)} />
+        </ModalLogin>
+      </Suspense>
 
       <NavBar navbarColor={theme.navbar} accentColor={theme.accent}>
         <NavContainer ref={menuRef}>

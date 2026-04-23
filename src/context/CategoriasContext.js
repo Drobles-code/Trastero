@@ -1,7 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { CATEGORIAS } from '../constants/categorias';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+import { API_URL } from '../utils/api';
 
 // Fallback con los datos del archivo JS mientras carga la API
 // Formato: { id, nombre, subs: [{ id, nombre }] }

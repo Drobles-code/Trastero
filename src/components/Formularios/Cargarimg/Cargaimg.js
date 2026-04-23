@@ -1,107 +1,89 @@
-import React, { Component } from 'react';
-import '../Cargarimg/Cargaimg.css';
+import React from 'react';
+import styled from 'styled-components';
 import { Link } from 'react-router-dom';
+import AdaptiveGrid from '../../ImageGrid/AdaptiveGrid';
 
-const IMG_BASE = {
-  objectFit: 'cover',
-  border: '2px solid rgb(247 247 251)',
-};
+/* ── Styled Components (reemplaza Cargaimg.css) ── */
 
-const GRID_STYLE = {
-  display: 'grid',
-  gridTemplateColumns: '1fr 1fr',
-  width: '244px',
-};
+const CardLink = styled(Link)`
+  text-decoration: none;
+`;
 
-function AdaptiveGrid({ ruta, imgs, thumbs, width }) {
-  // thumbs = array de filenames WebP para previsualización rápida (fallback a imgs)
-  const gridStyle = width ? { ...GRID_STYLE, width } : GRID_STYLE;
-  const display = (thumbs && thumbs.length ? thumbs : imgs);
-  const srcs = display.filter(Boolean).map(name => `${ruta}/${name}`);
-  const n = srcs.length;
+const CardArticle = styled.article`
+  position: relative;
+  width: 249px;
+  height: 239px;
+  display: inline-block;
+  cursor: pointer;
+  &:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.35); border-radius: 8px; }
+`;
 
-  if (n === 0) return null;
+const TitleBar = styled.div`
+  background-color: var(--card-title-color);
+  border-radius: 8px 8px 0 0;
+  border: 2px solid rgb(247 247 251);
+  width: 244px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  color: var(--accent-color);
+  font-size: 15px;
+  font-weight: bold;
+`;
 
-  if (n === 1) {
-    return (
-      <div style={gridStyle}>
-        <img src={srcs[0]} alt="" loading="lazy"
-          style={{ ...IMG_BASE, gridColumn: '1/3', gridRow: '1/3', width: '100%', height: '168px', borderRadius: '0 0 8px 8px' }} />
-      </div>
-    );
-  }
+const TitleAvatar = styled.img`
+  border-radius: 5px 0 0 0;
+  vertical-align: middle;
+  margin: 5px;
+  width: 60%;
+  height: auto;
+  max-width: 60px;
+  max-height: 39px;
+  flex-shrink: 0;
+`;
 
-  if (n === 2) {
-    return (
-      <div style={gridStyle}>
-        <img src={srcs[0]} alt="" loading="lazy" style={{ ...IMG_BASE, gridColumn: '1/2', gridRow: '1/3', width: '100%', height: '168px', borderRadius: '0 0 0 8px' }} />
-        <img src={srcs[1]} alt="" loading="lazy" style={{ ...IMG_BASE, gridColumn: '2/3', gridRow: '1/3', width: '100%', height: '168px', borderRadius: '0 0 8px 0' }} />
-      </div>
-    );
-  }
+const TitleText = styled.span`
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 6px;
+`;
 
-  if (n === 3) {
-    return (
-      <div style={gridStyle}>
-        <img src={srcs[0]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px' }} />
-        <img src={srcs[1]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px' }} />
-        <img src={srcs[2]} alt="" loading="lazy"
-          style={{ ...IMG_BASE, gridColumn: '1/3', width: '100%', height: '84px', marginTop: '-4px', borderRadius: '0 0 8px 8px' }} />
-      </div>
-    );
-  }
+/* ── Componente ── */
 
-  // 4 imágenes — grid estándar 2×2
+function Cargaimg({ task }) {
+  const imgs   = [task.Imagen1, task.Imagen2, task.Imagen3, task.Imagen4];
+  const thumbs = [
+    task.Thumb1 || task.Imagen1,
+    task.Thumb2 || task.Imagen2,
+    task.Thumb3 || task.Imagen3,
+    task.Thumb4 || task.Imagen4,
+  ];
+
+  let currentUserId = null;
+  try {
+    const stored = localStorage.getItem('user');
+    if (stored) currentUserId = JSON.parse(stored).id;
+  } catch {}
+
+  const isOwner = currentUserId && Number(task.usuario_id) === Number(currentUserId);
+  const linkTo  = isOwner ? '/mi-trastero' : `/De/${task.trastero_nombre}`;
+
   return (
-    <div style={gridStyle}>
-      <img src={srcs[0]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px' }} />
-      <img src={srcs[1]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px' }} />
-      <img src={srcs[2]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px', marginTop: '-4px', borderRadius: '0 0 0 8px' }} />
-      <img src={srcs[3]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px', marginTop: '-4px', borderRadius: '0 0 8px 0' }} />
-    </div>
+    <CardLink to={linkTo}>
+      <CardArticle>
+        <TitleBar>
+          <TitleAvatar
+            src={`${task.Ruta}/${task.Thumb1 || task.Imagen1}`}
+            alt={task.trastero_nombre || task.Nombre}
+            loading="lazy"
+          />
+          <TitleText>{task.trastero_nombre || task.Nombre}</TitleText>
+        </TitleBar>
+        <AdaptiveGrid ruta={task.Ruta} imgs={imgs} thumbs={thumbs} />
+      </CardArticle>
+    </CardLink>
   );
-}
-
-class Cargaimg extends Component {
-  render() {
-    const { task } = this.props;
-    const imgs   = [task.Imagen1, task.Imagen2, task.Imagen3, task.Imagen4];
-    const thumbs = [
-      task.Thumb1 || task.Imagen1,
-      task.Thumb2 || task.Imagen2,
-      task.Thumb3 || task.Imagen3,
-      task.Thumb4 || task.Imagen4,
-    ];
-
-    let currentUserId = null;
-    try {
-      const stored = localStorage.getItem('user');
-      if (stored) currentUserId = JSON.parse(stored).id;
-    } catch {}
-    const isOwner = currentUserId && Number(task.usuario_id) === Number(currentUserId);
-    const linkTo  = isOwner ? '/mi-trastero' : `/De/${task.trastero_nombre}`;
-
-    return (
-      <Link to={linkTo}>
-        <div className="container" align="center" id={task.id}>
-          <article className="location-listing">
-            <div className="backgroundTitle">
-              <p className="titulo-tras">
-                <img
-                  className="img-titulo-tras"
-                  src={`${task.Ruta}/${task.Thumb1 || task.Imagen1}`}
-                  alt={task.Nombre}
-                  loading="lazy"
-                />
-                {task.trastero_nombre || task.Nombre}
-              </p>
-            </div>
-            <AdaptiveGrid ruta={task.Ruta} imgs={imgs} thumbs={thumbs} />
-          </article>
-        </div>
-      </Link>
-    );
-  }
 }
 
 export default Cargaimg;

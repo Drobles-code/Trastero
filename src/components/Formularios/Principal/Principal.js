@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import '../Principal/Principal.css';
 import Buscador from '../Buscador/Buscador';
 import Cargaimg from '../Cargarimg/Cargaimg';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+import { API_URL } from '../../../utils/api';
 
 function Principal() {
   const [allTasks, setAllTasks] = useState([]);

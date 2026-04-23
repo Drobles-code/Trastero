@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { ThemeContext } from '../context/ThemeContext';
+import { getContrastColor } from '../utils/colorUtils';
 
 const Container = styled.div`
   display: flex;
@@ -12,15 +13,6 @@ const Container = styled.div`
   border-radius: 10px;
   transition: background-color 0.3s ease;
 `;
-
-const getContrastColor = (hexColor) => {
-  const hex = hexColor.replace('#', '');
-  const r = parseInt(hex.substr(0, 2), 16);
-  const g = parseInt(hex.substr(2, 2), 16);
-  const b = parseInt(hex.substr(4, 2), 16);
-  const luminancia = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminancia > 0.5 ? '#000000' : '#ffffff';
-};
 
 const FormBox = styled.div`
   background: ${props => props.bgColor};

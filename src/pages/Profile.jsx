@@ -2,17 +2,8 @@ import React, { useState, useEffect, useContext } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { ThemeContext } from '../context/ThemeContext';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-
-const getContrastColor = (hexColor) => {
-  const hex = (hexColor || '#000000').replace('#', '');
-  const r = parseInt(hex.substr(0, 2), 16);
-  const g = parseInt(hex.substr(2, 2), 16);
-  const b = parseInt(hex.substr(4, 2), 16);
-  const luminancia = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminancia > 0.5 ? '#000000' : '#ffffff';
-};
+import { API_URL } from '../utils/api';
+import { getContrastColor } from '../utils/colorUtils';
 
 /* ─── Layout principal ─────────────────────────────────────── */
 

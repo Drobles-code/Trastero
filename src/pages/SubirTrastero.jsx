@@ -2,17 +2,9 @@ import React, { useState, useContext, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { ThemeContext } from '../context/ThemeContext';
-import '../components/Formularios/Cargarimg/Cargaimg.css';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-
-const getContrast = (hex) => {
-  const h = (hex || '#000000').replace('#', '');
-  const r = parseInt(h.substr(0, 2), 16);
-  const g = parseInt(h.substr(2, 2), 16);
-  const b = parseInt(h.substr(4, 2), 16);
-  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.5 ? '#000000' : '#ffffff';
-};
+import { API_URL } from '../utils/api';
+import { getContrastColor as getContrast } from '../utils/colorUtils';
+import AdaptiveGrid from '../components/ImageGrid/AdaptiveGrid';
 
 /* ── Layout ── */
 const PageWrapper = styled.div`
@@ -191,65 +183,7 @@ const PublishBtn = styled.button`
   &:disabled { opacity: 0.5; cursor: not-allowed; }
 `;
 
-/* ── Grid preview adaptativo ── */
-const GRID_STYLE = {
-  display: 'grid',
-  gridTemplateColumns: '1fr 1fr',
-  width: '249px',
-};
-
-const IMG_BASE = {
-  objectFit: 'cover',
-  border: '2px solid rgb(247 247 251)',
-};
-
-function PreviewGrid({ slots }) {
-  const imgs = slots.filter(Boolean).map(s => s.preview);
-
-  if (imgs.length === 0) return null;
-
-  if (imgs.length === 1) {
-    return (
-      <div style={GRID_STYLE}>
-        <img
-          src={imgs[0]} alt="preview"
-          style={{ ...IMG_BASE, gridColumn: '1 / 3', gridRow: '1 / 3', width: '100%', height: '168px', borderRadius: 8 }}
-        />
-      </div>
-    );
-  }
-
-  if (imgs.length === 2) {
-    return (
-      <div style={GRID_STYLE}>
-        <img src={imgs[0]} alt="preview" style={{ ...IMG_BASE, gridColumn: '1/2', gridRow: '1/3', width: '100%', height: '168px', borderRadius: '8px 0 0 8px' }} />
-        <img src={imgs[1]} alt="preview" style={{ ...IMG_BASE, gridColumn: '2/3', gridRow: '1/3', width: '100%', height: '168px', borderRadius: '0 8px 8px 0' }} />
-      </div>
-    );
-  }
-
-  if (imgs.length === 3) {
-    return (
-      <div style={GRID_STYLE}>
-        <img src={imgs[0]} alt="preview" className="item img-gif-top-left"    style={{ ...IMG_BASE, width: '100%', height: '84px', maxWidth: '100%', maxHeight: '84px', objectFit: 'cover', borderRadius: '8px 0 0 0' }} />
-        <img src={imgs[1]} alt="preview" className="item img-gif-top-right"   style={{ ...IMG_BASE, width: '100%', height: '84px', maxWidth: '100%', maxHeight: '84px', objectFit: 'cover', borderRadius: '0 8px 0 0' }} />
-        <img src={imgs[2]} alt="preview"
-          style={{ ...IMG_BASE, gridColumn: '1 / 3', width: '100%', height: '84px', objectFit: 'cover', borderRadius: '0 0 8px 8px', marginTop: '-4px' }}
-        />
-      </div>
-    );
-  }
-
-  // 4 imágenes — grid estándar igual que la tarjeta
-  return (
-    <div style={GRID_STYLE}>
-      <img src={imgs[0]} alt="preview" className="item img-gif-top-left"     style={{ ...IMG_BASE, width: '100%', height: '84px', maxWidth: '100%', maxHeight: '84px', objectFit: 'cover', borderRadius: '8px 0 0 0' }} />
-      <img src={imgs[1]} alt="preview" className="item img-gif-top-right"    style={{ ...IMG_BASE, width: '100%', height: '84px', maxWidth: '100%', maxHeight: '84px', objectFit: 'cover', borderRadius: '0 8px 0 0' }} />
-      <img src={imgs[2]} alt="preview" className="item img-gif-left-bottom"  style={{ ...IMG_BASE, width: '100%', height: '84px', maxWidth: '100%', maxHeight: '84px', objectFit: 'cover', borderRadius: '0 0 0 8px' }} />
-      <img src={imgs[3]} alt="preview" className="item img-gif-right-bottom" style={{ ...IMG_BASE, width: '100%', height: '84px', maxWidth: '100%', maxHeight: '84px', objectFit: 'cover', borderRadius: '0 0 8px 0' }} />
-    </div>
-  );
-}
+/* ── AdaptiveGrid — importado de ImageGrid/AdaptiveGrid ── */
 
 /* ── Componente principal ── */
 function SubirTrastero({ user }) {
@@ -393,7 +327,7 @@ function SubirTrastero({ user }) {
           <Label color={txt}>Vista previa</Label>
           {hasImages ? (
             <PreviewCard accent={acc}>
-              <PreviewGrid slots={slots} />
+              <AdaptiveGrid srcs={slots.filter(Boolean).map(s => s.preview)} width="249px" />
             </PreviewCard>
           ) : (
             <PlaceholderPrev accent={acc} color={txt}>

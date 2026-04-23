@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { ThemeContext } from '../context/ThemeContext';
+import { API_URL } from '../utils/api';
 
 const Container = styled.div`
   display: flex;
@@ -130,8 +131,6 @@ function SignIn({ onLogin }) {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { theme } = useContext(ThemeContext);
-
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
   const handleSubmit = async (e) => {
     e.preventDefault();

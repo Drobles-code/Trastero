@@ -18,29 +18,67 @@ type: project
 - Se guarda en `localStorage` como `appTheme`
 - MiTrastero usa `theme.background` para el fondo del `PageWrapper`
 
-## AdaptiveGrid — DOS versiones independientes
+## Utilidades compartidas
 
-| Archivo | Constante | Border imágenes |
-|---|---|---|
-| `Cargaimg.js` | `IMG_BASE` | `border: '2px solid rgb(247 247 251)'` ✓ |
-| `MiTrastero.jsx` | `IMG_BASE_CARD` | `border: '2px solid rgb(247 247 251)'` ✓ |
+### `src/utils/colorUtils.js`
+- `getContrastColor(hex)` — devuelve `#000000` o `#ffffff` según luminancia del fondo
+- Importar en cualquier componente que necesite contraste de texto
 
-> CRÍTICO: IMG_BASE_CARD DEBE tener el border. Sin él las imágenes se pegan sin separación visual.
+### `src/utils/api.js`
+- `API_URL` — `process.env.REACT_APP_API_URL || 'http://localhost:5000'`
+- Importar en cualquier componente que haga fetch al backend
 
-### Layouts AdaptiveGrid
+## ImageGrid — componentes compartidos
+
+Ubicación: `src/components/ImageGrid/`
+
+### AdaptiveGrid.jsx
+Grid 2×2 para tarjetas. Siempre `border: '2px solid rgb(247 247 251)'`.
+
+```jsx
+import AdaptiveGrid from '../components/ImageGrid/AdaptiveGrid';
+// Modo normal (ruta + filenames):
+<AdaptiveGrid ruta={task.Ruta} imgs={imgs} thumbs={thumbs} width="244px" />
+// Modo preview (URLs directas — upload forms):
+<AdaptiveGrid srcs={slots.filter(Boolean).map(s => s.preview)} width="249px" />
+```
+
+**Props:** `ruta`, `imgs`, `thumbs`, `srcs` (alternativa directa), `width` (default `'244px'`)
+
+**Layouts:**
 - n=1: imagen full `gridColumn:1/3, height:168px`
 - n=2: dos columnas `height:168px`
 - n=3: 2×`84px` arriba + 1 full `84px` abajo con `marginTop:'-4px'`
 - n=4: 2×2 `84px` con `marginTop:'-4px'` en fila inferior
 
-### Props AdaptiveGrid
-- `ruta` — base URL de la carpeta del usuario
-- `imgs` — array de filenames originales (JPG/PNG) — se usa en lightbox
-- `thumbs` — array de filenames WebP thumbnail — se usa en las cards (fallback a `imgs` si vacío)
-- `width` — ancho opcional del grid
+**Usado en:** Cargaimg.js, De.js, MiTrastero.jsx, SubirTrastero.jsx
 
-### Diferencia Cargaimg vs MiTrastero
-Ambas tienen el mismo border. La diferencia es que MiTrastero NO tiene `export` en AdaptiveGrid (es función local).
+### DetailGrid.jsx
+Grid clickable para modales de detalle.
+
+```jsx
+import DetailGrid from '../components/ImageGrid/DetailGrid';
+<DetailGrid ruta={task.Ruta} imgs={imgs} onImgClick={i => openLb(i)} size="large" />
+```
+
+**Props:** `ruta`, `imgs`, `onImgClick?`, `size: 'large'|'medium'` (default `'large'`)
+- `large`: 1→320px, 2→240px, 3-4→160px (MiTrastero)
+- `medium`: 1→300px, 2→220px, 3-4→160px (De.js)
+- Cursor `zoom-in` automático cuando `onImgClick` está presente
+
+**Usado en:** MiTrastero.jsx (large), De.js (medium)
+
+### PreviewGrid.jsx
+Preview compacto en formularios de subida/edición.
+
+```jsx
+import PreviewGrid from '../components/ImageGrid/PreviewGrid';
+<PreviewGrid slots={slots} />  // slots: Array<{preview: string}|null>
+```
+
+**Alturas:** 1→140px, 2→110px, 3-4→90px
+
+**Usado en:** ModalSubir.jsx, ModalEditar.jsx
 
 ## Imágenes — dos versiones por foto
 Desde el servidor se reciben dos rutas por imagen:
@@ -85,6 +123,21 @@ const thumbs = [
 - Layouts: 1 foto (320px full), 2 fotos (2 cols 240px), 3 fotos (2+1 span), 4 fotos (2×2)
 - Uso en modal de detalle: pasa handler que llama `setLightbox({ imgs: allImgs, idx: i })`
 
+## Lazy Loading — modales
+Todos los modales usan `React.lazy` + `Suspense` — solo se descargan al abrirse por primera vez.
+
+```jsx
+// Patrón en MiTrastero.jsx y Navbar.jsx:
+const ModalSubir = lazy(() => import('../components/Modal/ModalSubir'));
+// ...
+<Suspense fallback={null}>
+  <ModalSubir isOpen={showSubir} ... />
+</Suspense>
+```
+
+**Modales lazy en Navbar:** `ModalLogin`, `SignInContent`, `SignUpContent`, `AboutContent`, `ContactContent`
+**Modales lazy en MiTrastero:** `ModalSubir`, `ModalEditar`
+
 ## Modales
 ### ModalSubir.jsx
 - Recibe prop `trasteroId` → append al FormData antes de enviar
@@ -92,10 +145,12 @@ const thumbs = [
 - Categoría y Subcategoría en la misma fila (flex row)
 - Precio a la izquierda + pills Negociable/Acepto cambio a la derecha (misma fila, flex wrap)
 - Click fuera del modal NO cierra → solo cierra el botón ✕
+- Usa `PreviewGrid` de `ImageGrid/PreviewGrid`
 
 ### ModalEditar.jsx
 - Mismo estilo `TogglePill` que ModalSubir
 - Maneja `slots_info` JSON para saber qué imágenes son nuevas/vacías/existentes
+- Usa `PreviewGrid` de `ImageGrid/PreviewGrid`
 
 ## Medidas de Modales
 
@@ -134,8 +189,16 @@ const thumbs = [
 - `CAMPOS_EXTRA` — campos dinámicos por categoría (Motor: km/anio/combustible/cv; Inmobiliaria: metros/habitaciones/banos)
 - `formatExtra(extras)` — formatea para mostrar en tarjeta
 
+## Cargaimg.js — componente funcional
+Convertido de `class` a `function` (2026-04-23). Sin CSS externo — estilos en Styled Components.
+- `CardLink` (Link), `CardArticle`, `TitleBar`, `TitleAvatar`, `TitleText`
+- Usa `AdaptiveGrid` de `ImageGrid/AdaptiveGrid`
+- `Cargaimg.css` eliminado — no importar en ningún sitio
+
 ## Patrones de estilo
 - Tarjetas: `border: 2px solid rgb(247, 247, 251)`, `border-radius: 10px`
 - Badges: `background: accent22, border: 1px solid accent44, color: accent`
 - Separador imagen/info: `border-top: 2px solid rgb(247, 247, 251)` en FlatInfo
-- `getContrastColor(hex)` — devuelve `#000` o `#fff` según luminancia del fondo
+- `getContrastColor(hex)` — importar desde `src/utils/colorUtils.js`
+- `API_URL` — importar desde `src/utils/api.js`
+- Props de Styled Components con colores → usar siempre nombres como `bg`, `accent`, `color` (no `bgColor`, `textColor` — generan warning DOM en SC v6)

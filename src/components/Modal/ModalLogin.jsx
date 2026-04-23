@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
 import styled from 'styled-components';
 import { ThemeContext } from '../../context/ThemeContext';
+import { getContrastColor } from '../../utils/colorUtils';
 
 const Overlay = styled.div`
   position: fixed;
@@ -91,15 +92,6 @@ function ModalLogin({ isOpen, onClose, children }) {
     }
   };
 
-  // Función para determinar si un color es claro u oscuro
-  const getContrastColor = (hexColor) => {
-    const hex = hexColor.replace('#', '');
-    const r = parseInt(hex.substr(0, 2), 16);
-    const g = parseInt(hex.substr(2, 2), 16);
-    const b = parseInt(hex.substr(4, 2), 16);
-    const luminancia = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    return luminancia > 0.5 ? '#000000' : '#ffffff';
-  };
 
   // Si el modalBg es demasiado claro, usar un oscuro por defecto
   const modalBgColor = theme.modalBg || '#1a1a1a';

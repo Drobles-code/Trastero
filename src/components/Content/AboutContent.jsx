@@ -1,16 +1,7 @@
 import React, { useContext } from 'react';
 import styled from 'styled-components';
 import { ThemeContext } from '../../context/ThemeContext';
-
-// Función para determinar si un color es claro u oscuro
-const getContrastColor = (hexColor) => {
-  const hex = hexColor.replace('#', '');
-  const r = parseInt(hex.substr(0, 2), 16);
-  const g = parseInt(hex.substr(2, 2), 16);
-  const b = parseInt(hex.substr(4, 2), 16);
-  const luminancia = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminancia > 0.5 ? '#000000' : '#ffffff';
-};
+import { getContrastColor } from '../../utils/colorUtils';
 
 const Title = styled.h2`
   text-align: center;

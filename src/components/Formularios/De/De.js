@@ -3,14 +3,10 @@ import styled from 'styled-components';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ThemeContext } from '../../../context/ThemeContext';
 import { formatExtra } from '../../../constants/categorias';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-
-const getContrast = (hex) => {
-  const h = (hex || '#000000').replace('#', '');
-  const r = parseInt(h.substr(0,2),16), g = parseInt(h.substr(2,2),16), b = parseInt(h.substr(4,2),16);
-  return (0.299*r + 0.587*g + 0.114*b)/255 > 0.5 ? '#000000' : '#ffffff';
-};
+import { API_URL } from '../../../utils/api';
+import { getContrastColor as getContrast } from '../../../utils/colorUtils';
+import AdaptiveGrid from '../../ImageGrid/AdaptiveGrid';
+import DetailGrid from '../../ImageGrid/DetailGrid';
 
 /* ── Layout ──────────────────────────────────────────────────── */
 
@@ -109,42 +105,6 @@ const CardWrapper = styled.div`
   &:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.35); }
 `;
 
-const IMG_BASE = { objectFit: 'cover', border: '2px solid rgb(247 247 251)' };
-const GRID_STYLE = { display: 'grid', gridTemplateColumns: '1fr 1fr', width: '244px' };
-
-function AdaptiveGrid({ ruta, imgs, thumbs }) {
-  const display = (thumbs && thumbs.length ? thumbs : imgs);
-  const srcs = display.filter(Boolean).map(n => `${ruta}/${n}`);
-  const n = srcs.length;
-  if (n === 0) return null;
-  if (n === 1) return (
-    <div style={GRID_STYLE}>
-      <img src={srcs[0]} alt="" loading="lazy"
-        style={{ ...IMG_BASE, gridColumn: '1/3', gridRow: '1/3', width: '100%', height: '168px', borderRadius: '0 0 8px 8px' }} />
-    </div>
-  );
-  if (n === 2) return (
-    <div style={GRID_STYLE}>
-      <img src={srcs[0]} alt="" loading="lazy" style={{ ...IMG_BASE, gridColumn: '1/2', gridRow: '1/3', width: '100%', height: '168px', borderRadius: '0 0 0 8px' }} />
-      <img src={srcs[1]} alt="" loading="lazy" style={{ ...IMG_BASE, gridColumn: '2/3', gridRow: '1/3', width: '100%', height: '168px', borderRadius: '0 0 8px 0' }} />
-    </div>
-  );
-  if (n === 3) return (
-    <div style={GRID_STYLE}>
-      <img src={srcs[0]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px' }} />
-      <img src={srcs[1]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px' }} />
-      <img src={srcs[2]} alt="" loading="lazy" style={{ ...IMG_BASE, gridColumn: '1/3', width: '100%', height: '84px', marginTop: '-4px', borderRadius: '0 0 8px 8px' }} />
-    </div>
-  );
-  return (
-    <div style={GRID_STYLE}>
-      <img src={srcs[0]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px' }} />
-      <img src={srcs[1]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px' }} />
-      <img src={srcs[2]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px', marginTop: '-4px', borderRadius: '0 0 0 8px' }} />
-      <img src={srcs[3]} alt="" loading="lazy" style={{ ...IMG_BASE, width: '100%', height: '84px', marginTop: '-4px', borderRadius: '0 0 8px 0' }} />
-    </div>
-  );
-}
 
 const CardInfo = styled.div`
   padding: 10px 12px;
@@ -305,40 +265,7 @@ const DetailDesc = styled.p`
   font-size: 14px;
 `;
 
-/* ── Detail image grid ───────────────────────────────────────── */
-const DG2 = { display: 'grid', gridTemplateColumns: '1fr 1fr', borderRadius: 10, overflow: 'hidden', marginBottom: 0 };
-const DI  = { objectFit: 'cover', border: '2px solid rgb(247 247 251)', cursor: 'zoom-in' };
-
-function DetailGrid({ ruta, imgs, onImgClick }) {
-  const srcs = imgs.filter(Boolean).map(n => `${ruta}/${n}`);
-  const n = srcs.length;
-  if (n === 0) return null;
-  if (n === 1) return (
-    <img src={srcs[0]} alt="" onClick={() => onImgClick(0)}
-      style={{ ...DI, width: '100%', height: 300, borderRadius: 10, display: 'block', marginBottom: 0 }} />
-  );
-  if (n === 2) return (
-    <div style={DG2}>
-      <img src={srcs[0]} alt="" onClick={() => onImgClick(0)} style={{ ...DI, width: '100%', height: 220 }} />
-      <img src={srcs[1]} alt="" onClick={() => onImgClick(1)} style={{ ...DI, width: '100%', height: 220 }} />
-    </div>
-  );
-  if (n === 3) return (
-    <div style={DG2}>
-      <img src={srcs[0]} alt="" onClick={() => onImgClick(0)} style={{ ...DI, width: '100%', height: 160 }} />
-      <img src={srcs[1]} alt="" onClick={() => onImgClick(1)} style={{ ...DI, width: '100%', height: 160 }} />
-      <img src={srcs[2]} alt="" onClick={() => onImgClick(2)} style={{ ...DI, gridColumn: '1/3', width: '100%', height: 160 }} />
-    </div>
-  );
-  return (
-    <div style={DG2}>
-      <img src={srcs[0]} alt="" onClick={() => onImgClick(0)} style={{ ...DI, width: '100%', height: 160 }} />
-      <img src={srcs[1]} alt="" onClick={() => onImgClick(1)} style={{ ...DI, width: '100%', height: 160 }} />
-      <img src={srcs[2]} alt="" onClick={() => onImgClick(2)} style={{ ...DI, width: '100%', height: 160 }} />
-      <img src={srcs[3]} alt="" onClick={() => onImgClick(3)} style={{ ...DI, width: '100%', height: 160 }} />
-    </div>
-  );
-}
+/* ── Detail image grid — importado de ImageGrid/DetailGrid ──── */
 
 /* ── Lightbox ────────────────────────────────────────────────── */
 
@@ -522,6 +449,7 @@ export default function De() {
               ruta={detalle.Ruta}
               imgs={[detalle.Imagen1, detalle.Imagen2, detalle.Imagen3, detalle.Imagen4]}
               onImgClick={i => openLb(detalle, i)}
+              size="medium"
             />
           </DetailBox>
         </Overlay>

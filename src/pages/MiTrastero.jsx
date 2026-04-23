@@ -1,22 +1,15 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, lazy, Suspense } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { ThemeContext } from '../context/ThemeContext';
-import '../components/Formularios/Cargarimg/Cargaimg.css';
-import ModalSubir from '../components/Modal/ModalSubir';
-import ModalEditar from '../components/Modal/ModalEditar';
+
+const ModalSubir  = lazy(() => import('../components/Modal/ModalSubir'));
+const ModalEditar = lazy(() => import('../components/Modal/ModalEditar'));
 import { formatExtra } from '../constants/categorias';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-
-const getContrastColor = (hexColor) => {
-  const hex = (hexColor || '#000000').replace('#', '');
-  const r = parseInt(hex.substr(0, 2), 16);
-  const g = parseInt(hex.substr(2, 2), 16);
-  const b = parseInt(hex.substr(4, 2), 16);
-  const luminancia = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminancia > 0.5 ? '#000000' : '#ffffff';
-};
+import { API_URL } from '../utils/api';
+import { getContrastColor } from '../utils/colorUtils';
+import AdaptiveGrid from '../components/ImageGrid/AdaptiveGrid';
+import DetailGrid from '../components/ImageGrid/DetailGrid';
 
 /* ─── Layout ─────────────────────────────────────────────── */
 
@@ -395,40 +388,7 @@ const DetailTitle = styled.h2`
   padding-right: 40px;
 `;
 
-const IMG_BASE = { objectFit: 'cover', border: '2px solid rgb(247 247 251)' };
-const GRID2 = { display: 'grid', gridTemplateColumns: '1fr 1fr', borderRadius: 8, overflow: 'hidden' };
-
-function DetailGrid({ ruta, imgs, onImgClick }) {
-  const srcs = imgs.filter(Boolean).map(n => `${ruta}/${n}`);
-  const n = srcs.length;
-  const click = (i, e) => { e.stopPropagation(); onImgClick?.(i); };
-  const imgStyle = (extra) => ({ ...IMG_BASE, cursor: onImgClick ? 'zoom-in' : 'default', ...extra });
-  if (n === 0) return null;
-  if (n === 1) return (
-    <img src={srcs[0]} alt="" onClick={e => click(0, e)} style={imgStyle({ width: '100%', height: 320, borderRadius: 8 })} />
-  );
-  if (n === 2) return (
-    <div style={GRID2}>
-      <img src={srcs[0]} alt="" onClick={e => click(0, e)} style={imgStyle({ width: '100%', height: 240 })} />
-      <img src={srcs[1]} alt="" onClick={e => click(1, e)} style={imgStyle({ width: '100%', height: 240 })} />
-    </div>
-  );
-  if (n === 3) return (
-    <div style={GRID2}>
-      <img src={srcs[0]} alt="" onClick={e => click(0, e)} style={imgStyle({ width: '100%', height: 160 })} />
-      <img src={srcs[1]} alt="" onClick={e => click(1, e)} style={imgStyle({ width: '100%', height: 160 })} />
-      <img src={srcs[2]} alt="" onClick={e => click(2, e)} style={imgStyle({ gridColumn: '1/3', width: '100%', height: 160 })} />
-    </div>
-  );
-  return (
-    <div style={GRID2}>
-      <img src={srcs[0]} alt="" onClick={e => click(0, e)} style={imgStyle({ width: '100%', height: 160 })} />
-      <img src={srcs[1]} alt="" onClick={e => click(1, e)} style={imgStyle({ width: '100%', height: 160 })} />
-      <img src={srcs[2]} alt="" onClick={e => click(2, e)} style={imgStyle({ width: '100%', height: 160 })} />
-      <img src={srcs[3]} alt="" onClick={e => click(3, e)} style={imgStyle({ width: '100%', height: 160 })} />
-    </div>
-  );
-}
+/* ─── DetailGrid y AdaptiveGrid — importados de ImageGrid ─── */
 
 const DetailActions = styled.div`
   display: flex;
@@ -511,46 +471,7 @@ const LightboxDot = styled.div`
   transition: background 0.2s; cursor: pointer;
 `;
 
-/* ─── Grid de imágenes (independiente de Cargaimg) ────────── */
-
-const IMG_BASE_CARD = { objectFit: 'cover', border: '2px solid rgb(247 247 251)' };
-const GRID_STYLE_CARD = { display: 'grid', gridTemplateColumns: '1fr 1fr' };
-
-function AdaptiveGrid({ ruta, imgs, thumbs, width }) {
-  const gridStyle = width ? { ...GRID_STYLE_CARD, width } : GRID_STYLE_CARD;
-  const display = (thumbs && thumbs.length ? thumbs : imgs);
-  const srcs = display.filter(Boolean).map(name => `${ruta}/${name}`);
-  const n = srcs.length;
-  if (n === 0) return null;
-  if (n === 1) return (
-    <div style={gridStyle}>
-      <img src={srcs[0]} alt="" loading="lazy"
-        style={{ ...IMG_BASE_CARD, gridColumn: '1/3', gridRow: '1/3', width: '100%', height: '168px', borderRadius: '0 0 8px 8px' }} />
-    </div>
-  );
-  if (n === 2) return (
-    <div style={gridStyle}>
-      <img src={srcs[0]} alt="" loading="lazy" style={{ ...IMG_BASE_CARD, gridColumn: '1/2', gridRow: '1/3', width: '100%', height: '168px', borderRadius: '0 0 0 8px' }} />
-      <img src={srcs[1]} alt="" loading="lazy" style={{ ...IMG_BASE_CARD, gridColumn: '2/3', gridRow: '1/3', width: '100%', height: '168px', borderRadius: '0 0 8px 0' }} />
-    </div>
-  );
-  if (n === 3) return (
-    <div style={gridStyle}>
-      <img src={srcs[0]} alt="" loading="lazy" style={{ ...IMG_BASE_CARD, width: '100%', height: '84px' }} />
-      <img src={srcs[1]} alt="" loading="lazy" style={{ ...IMG_BASE_CARD, width: '100%', height: '84px' }} />
-      <img src={srcs[2]} alt="" loading="lazy"
-        style={{ ...IMG_BASE_CARD, gridColumn: '1/3', width: '100%', height: '84px', marginTop: '-4px', borderRadius: '0 0 8px 8px' }} />
-    </div>
-  );
-  return (
-    <div style={gridStyle}>
-      <img src={srcs[0]} alt="" loading="lazy" style={{ ...IMG_BASE_CARD, width: '100%', height: '84px' }} />
-      <img src={srcs[1]} alt="" loading="lazy" style={{ ...IMG_BASE_CARD, width: '100%', height: '84px' }} />
-      <img src={srcs[2]} alt="" loading="lazy" style={{ ...IMG_BASE_CARD, width: '100%', height: '84px', marginTop: '-4px', borderRadius: '0 0 0 8px' }} />
-      <img src={srcs[3]} alt="" loading="lazy" style={{ ...IMG_BASE_CARD, width: '100%', height: '84px', marginTop: '-4px', borderRadius: '0 0 8px 0' }} />
-    </div>
-  );
-}
+/* ─── AdaptiveGrid y DetailGrid — importados de ImageGrid ─── */
 
 /* ─── Tarjeta ─────────────────────────────────────────────── */
 
@@ -712,24 +633,28 @@ function MiTrastero({ user }) {
   return (
     <PageWrapper bg={theme.background || '#000000'}>
 
-      {/* ── Modal subir artículo ── */}
-      <ModalSubir
-        isOpen={showSubir}
-        onClose={() => setShowSubir(false)}
-        onPublicado={nuevo => setTrasteros(prev => [...prev, nuevo])}
-        trasteroId={trasteroId}
-      />
+      {/* ── Modal subir artículo — carga solo al abrirse ── */}
+      <Suspense fallback={null}>
+        <ModalSubir
+          isOpen={showSubir}
+          onClose={() => setShowSubir(false)}
+          onPublicado={nuevo => setTrasteros(prev => [...prev, nuevo])}
+          trasteroId={trasteroId}
+        />
+      </Suspense>
 
-      {/* ── Modal editar artículo ── */}
-      <ModalEditar
-        isOpen={!!editar}
-        trastero={editar}
-        onClose={() => setEditar(null)}
-        onGuardado={actualizado => {
-          setTrasteros(prev => prev.map(t => t.id === actualizado.id ? actualizado : t));
-          setEditar(null);
-        }}
-      />
+      {/* ── Modal editar artículo — carga solo al abrirse ── */}
+      <Suspense fallback={null}>
+        <ModalEditar
+          isOpen={!!editar}
+          trastero={editar}
+          onClose={() => setEditar(null)}
+          onGuardado={actualizado => {
+            setTrasteros(prev => prev.map(t => t.id === actualizado.id ? actualizado : t));
+            setEditar(null);
+          }}
+        />
+      </Suspense>
 
       {/* ── Modal detalle ── */}
       {detalle && (

@@ -3,16 +3,9 @@ import styled from 'styled-components';
 import { ThemeContext } from '../../context/ThemeContext';
 import { CategoriasContext } from '../../context/CategoriasContext';
 import { CAMPOS_EXTRA } from '../../constants/categorias';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-
-const getContrast = (hex) => {
-  const h = (hex || '#000000').replace('#', '');
-  const r = parseInt(h.substr(0, 2), 16);
-  const g = parseInt(h.substr(2, 2), 16);
-  const b = parseInt(h.substr(4, 2), 16);
-  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.5 ? '#000000' : '#ffffff';
-};
+import { API_URL } from '../../utils/api';
+import { getContrastColor as getContrast } from '../../utils/colorUtils';
+import PreviewGrid from '../ImageGrid/PreviewGrid';
 
 const Overlay = styled.div`
   position: fixed; inset: 0;
@@ -129,17 +122,7 @@ const PlaceholderPrev = styled.div`
   border: 2px dashed ${p => p.accent}44; border-radius: 8px;
   color: ${p => p.color}; font-size: 13px; opacity: 0.5;
 `;
-const IMG_BASE = { objectFit: 'cover', border: '2px solid rgb(247 247 251)' };
-const GRID2 = { display: 'grid', gridTemplateColumns: '1fr 1fr', width: '100%', borderRadius: 8, overflow: 'hidden' };
-function PreviewGrid({ slots }) {
-  const imgs = slots.filter(Boolean).map(s => s.preview);
-  const n = imgs.length;
-  if (n === 0) return null;
-  if (n === 1) return <img src={imgs[0]} alt="" style={{ ...IMG_BASE, width: '100%', height: 140, borderRadius: 8 }} />;
-  if (n === 2) return <div style={GRID2}>{imgs.map((src,i) => <img key={i} src={src} alt="" style={{ ...IMG_BASE, width: '100%', height: 110 }} />)}</div>;
-  if (n === 3) return <div style={GRID2}><img src={imgs[0]} alt="" style={{ ...IMG_BASE, width: '100%', height: 90 }} /><img src={imgs[1]} alt="" style={{ ...IMG_BASE, width: '100%', height: 90 }} /><img src={imgs[2]} alt="" style={{ ...IMG_BASE, gridColumn: '1/3', width: '100%', height: 90 }} /></div>;
-  return <div style={GRID2}>{imgs.map((src,i) => <img key={i} src={src} alt="" style={{ ...IMG_BASE, width: '100%', height: 90 }} />)}</div>;
-}
+/* PreviewGrid — importado de ImageGrid/PreviewGrid */
 const ErrorMsg = styled.p`
   color: #e74c3c; font-size: 13px; margin: 0;
   padding: 10px 14px; background: #e74c3c22; border-radius: 6px;

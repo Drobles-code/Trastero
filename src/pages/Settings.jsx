@@ -2,14 +2,14 @@ import React, { useState, useEffect, useContext } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { ThemeContext } from '../context/ThemeContext';
+import { getContrastColor } from '../utils/colorUtils';
 
-const getContrastColor = (hexColor) => {
-  const hex = hexColor.replace('#', '');
-  const r = parseInt(hex.substr(0, 2), 16);
-  const g = parseInt(hex.substr(2, 2), 16);
-  const b = parseInt(hex.substr(4, 2), 16);
-  const luminancia = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminancia > 0.5 ? '#000000' : '#ffffff';
+// Normaliza hex a 6 dígitos para comparaciones correctas (#000 → #000000)
+const normalizeHex = (hex) => {
+  if (!hex) return '#000000';
+  const h = hex.replace('#', '');
+  if (h.length === 3) return '#' + h.split('').map(c => c + c).join('');
+  return '#' + h.toLowerCase();
 };
 
 const Container = styled.div`
@@ -70,6 +70,7 @@ const ColorOption = styled.button`
   border: 3px solid ${props => props.selected ? '#fff' : '#333'};
   border-radius: 8px;
   background-color: ${props => props.color};
+  color: ${props => getContrastColor(props.color || '#000000')};
   cursor: pointer;
   transition: all 0.3s;
   position: relative;
@@ -85,11 +86,11 @@ const ColorOption = styled.button`
 `;
 
 const ColorLabel = styled.span`
-  color: #fff;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   display: block;
   margin-top: 5px;
+  color: ${props => props.textColor || 'inherit'};
 `;
 
 const ThemeOption = styled.button`
@@ -163,12 +164,17 @@ function Settings() {
   const { theme, updateTheme, resetTheme } = useContext(ThemeContext);
   const [localTheme, setLocalTheme] = useState(theme);
 
+  // Sincronizar localTheme cuando el contexto carga desde localStorage
+  useEffect(() => {
+    setLocalTheme(theme);
+  }, [theme]);
+
   const themes = [
     {
       name: 'Dark (Default)',
-      navbar: '#0d0d0d',
-      background: '#000',
-      text: '#fff',
+      navbar: '#000000',
+      background: '#000000',
+      text: '#ffffff',
       accent: '#667eea',
       modalBg: '#1a1a1a',
       cardTitle: '#1a1a2e',
@@ -241,9 +247,9 @@ function Settings() {
   const handleResetTheme = () => {
     resetTheme();
     setLocalTheme({
-      navbar: '#0d0d0d',
-      background: '#000',
-      text: '#fff',
+      navbar: '#000000',
+      background: '#000000',
+      text: '#ffffff',
       accent: '#667eea',
       modalBg: '#1a1a1a',
       cardTitle: '#1a1a2e',
@@ -291,10 +297,10 @@ function Settings() {
               <ColorOption
                 key={color.hex}
                 color={color.hex}
-                selected={localTheme.navbar === color.hex}
+                selected={normalizeHex(localTheme.navbar) === normalizeHex(color.hex)}
                 onClick={() => handleColorChange('navbar', color.hex)}
               >
-                <ColorLabel>{color.name}</ColorLabel>
+                <ColorLabel textColor={getContrastColor(color.hex)}>{color.name}</ColorLabel>
               </ColorOption>
             ))}
           </ColorGrid>
@@ -308,10 +314,10 @@ function Settings() {
               <ColorOption
                 key={color.hex}
                 color={color.hex}
-                selected={localTheme.background === color.hex}
+                selected={normalizeHex(localTheme.background) === normalizeHex(color.hex)}
                 onClick={() => handleColorChange('background', color.hex)}
               >
-                <ColorLabel>{color.name}</ColorLabel>
+                <ColorLabel textColor={getContrastColor(color.hex)}>{color.name}</ColorLabel>
               </ColorOption>
             ))}
           </ColorGrid>
@@ -325,10 +331,10 @@ function Settings() {
               <ColorOption
                 key={color.hex}
                 color={color.hex}
-                selected={localTheme.text === color.hex}
+                selected={normalizeHex(localTheme.text) === normalizeHex(color.hex)}
                 onClick={() => handleColorChange('text', color.hex)}
               >
-                <ColorLabel>{color.name}</ColorLabel>
+                <ColorLabel textColor={getContrastColor(color.hex)}>{color.name}</ColorLabel>
               </ColorOption>
             ))}
           </ColorGrid>
@@ -345,14 +351,17 @@ function Settings() {
               { name: 'Rojo', hex: '#ff4444' },
               { name: 'Naranja', hex: '#ff8800' },
               { name: 'Rosado', hex: '#ff6b9d' },
+              { name: 'Cyan', hex: '#00e5ff' },
+              { name: 'Amarillo', hex: '#ffdd00' },
+              { name: 'Lima', hex: '#76ff03' },
             ].map((color) => (
               <ColorOption
                 key={color.hex}
                 color={color.hex}
-                selected={localTheme.accent === color.hex}
+                selected={normalizeHex(localTheme.accent) === normalizeHex(color.hex)}
                 onClick={() => handleColorChange('accent', color.hex)}
               >
-                <ColorLabel>{color.name}</ColorLabel>
+                <ColorLabel textColor={getContrastColor(color.hex)}>{color.name}</ColorLabel>
               </ColorOption>
             ))}
           </ColorGrid>
@@ -373,10 +382,10 @@ function Settings() {
               <ColorOption
                 key={color.hex}
                 color={color.hex}
-                selected={localTheme.modalBg === color.hex}
+                selected={normalizeHex(localTheme.modalBg) === normalizeHex(color.hex)}
                 onClick={() => handleColorChange('modalBg', color.hex)}
               >
-                <ColorLabel>{color.name}</ColorLabel>
+                <ColorLabel textColor={getContrastColor(color.hex)}>{color.name}</ColorLabel>
               </ColorOption>
             ))}
           </ColorGrid>
@@ -397,10 +406,10 @@ function Settings() {
               <ColorOption
                 key={color.hex}
                 color={color.hex}
-                selected={localTheme.cardTitle === color.hex}
+                selected={normalizeHex(localTheme.cardTitle) === normalizeHex(color.hex)}
                 onClick={() => handleColorChange('cardTitle', color.hex)}
               >
-                <ColorLabel>{color.name}</ColorLabel>
+                <ColorLabel textColor={getContrastColor(color.hex)}>{color.name}</ColorLabel>
               </ColorOption>
             ))}
           </ColorGrid>
