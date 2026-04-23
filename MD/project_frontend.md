@@ -1,204 +1,101 @@
 ---
 name: project_frontend
-description: Frontend React — componentes, páginas, estilos, AdaptiveGrid, ThemeContext. Cargar al tocar src/, páginas, modales o estilos.
+description: Frontend React — componentes, páginas, estilos, grids, modales, ThemeContext. Cargar al tocar src/.
 type: project
 ---
 
 # Frontend — React + Styled Components
 
-## Páginas principales
-- `src/pages/MiTrastero.jsx` — área privada, requiere login
-- `src/components/Formularios/Principal/Principal.js` — página pública, grid de artículos
-- `src/components/Formularios/De/De.js` — vista pública de trastero: toggle Grupo/Todas, modal detalle, lightbox
-
-## Tema global — ThemeContext
-`src/context/ThemeContext.js`
-- Propiedades: `background, text, accent, modalBg, navbar, cardTitle`
-- Default: `background: '#000', accent: '#667eea', modalBg: '#1a1a1a'`
-- Se guarda en `localStorage` como `appTheme`
-- MiTrastero usa `theme.background` para el fondo del `PageWrapper`
-
 ## Utilidades compartidas
+| Archivo | Exporta | Uso |
+|---|---|---|
+| `src/utils/api.js` | `API_URL` | Importar en cualquier fetch al backend |
+| `src/utils/colorUtils.js` | `getContrastColor(hex)` | Devuelve `#000`/`#fff` según luminancia |
 
-### `src/utils/colorUtils.js`
-- `getContrastColor(hex)` — devuelve `#000000` o `#ffffff` según luminancia del fondo
-- Importar en cualquier componente que necesite contraste de texto
+## ThemeContext
+`src/context/ThemeContext.js`
+- Props: `background, text, accent, modalBg, navbar, cardTitle`
+- Default: `background:'#000', accent:'#667eea', modalBg:'#1a1a1a'`
+- Persiste en `localStorage` como `appTheme`
 
-### `src/utils/api.js`
-- `API_URL` — `process.env.REACT_APP_API_URL || 'http://localhost:5000'`
-- Importar en cualquier componente que haga fetch al backend
+## ImageGrid — componentes compartidos (`src/components/ImageGrid/`)
 
-## ImageGrid — componentes compartidos
+### AdaptiveGrid.jsx — grid 2×2 para tarjetas
+Props: `ruta`, `imgs`, `thumbs`, `srcs` (URLs directas, alternativa a ruta+imgs), `width` (default `'244px'`)
+- n=1: full `height:168px` · n=2: dos cols `168px` · n=3: 2×`84px` + 1 span · n=4: 2×2 `84px`
+- Imágenes: `border: 2px solid rgb(247 247 251)` — **obligatorio, no quitar**
+- Usado en: Cargaimg, De.js, MiTrastero, SubirTrastero
 
-Ubicación: `src/components/ImageGrid/`
+### DetailGrid.jsx — grid clickable en modales de detalle
+Props: `ruta`, `imgs`, `onImgClick?`, `size: 'large'|'medium'` (default `'large'`)
+- large: 1→320px, 2→240px, 3-4→160px · medium: 1→300px, 2→220px, 3-4→160px
+- Cursor `zoom-in` automático si `onImgClick` presente
+- Usado en: MiTrastero (large), De.js (medium)
 
-### AdaptiveGrid.jsx
-Grid 2×2 para tarjetas. Siempre `border: '2px solid rgb(247 247 251)'`.
+### PreviewGrid.jsx — preview compacto en formularios
+Props: `slots` → `Array<{preview: string}|null>`
+- 1→140px · 2→110px · 3-4→90px
+- Usado en: ModalSubir, ModalEditar
 
-```jsx
-import AdaptiveGrid from '../components/ImageGrid/AdaptiveGrid';
-// Modo normal (ruta + filenames):
-<AdaptiveGrid ruta={task.Ruta} imgs={imgs} thumbs={thumbs} width="244px" />
-// Modo preview (URLs directas — upload forms):
-<AdaptiveGrid srcs={slots.filter(Boolean).map(s => s.preview)} width="249px" />
-```
+## Lazy Loading — modales
+Todos los modales usan `React.lazy` + `<Suspense fallback={null}>`.
+- **Navbar:** ModalLogin, SignInContent, SignUpContent, AboutContent, ContactContent
+- **MiTrastero:** ModalSubir, ModalEditar
 
-**Props:** `ruta`, `imgs`, `thumbs`, `srcs` (alternativa directa), `width` (default `'244px'`)
-
-**Layouts:**
-- n=1: imagen full `gridColumn:1/3, height:168px`
-- n=2: dos columnas `height:168px`
-- n=3: 2×`84px` arriba + 1 full `84px` abajo con `marginTop:'-4px'`
-- n=4: 2×2 `84px` con `marginTop:'-4px'` en fila inferior
-
-**Usado en:** Cargaimg.js, De.js, MiTrastero.jsx, SubirTrastero.jsx
-
-### DetailGrid.jsx
-Grid clickable para modales de detalle.
-
-```jsx
-import DetailGrid from '../components/ImageGrid/DetailGrid';
-<DetailGrid ruta={task.Ruta} imgs={imgs} onImgClick={i => openLb(i)} size="large" />
-```
-
-**Props:** `ruta`, `imgs`, `onImgClick?`, `size: 'large'|'medium'` (default `'large'`)
-- `large`: 1→320px, 2→240px, 3-4→160px (MiTrastero)
-- `medium`: 1→300px, 2→220px, 3-4→160px (De.js)
-- Cursor `zoom-in` automático cuando `onImgClick` está presente
-
-**Usado en:** MiTrastero.jsx (large), De.js (medium)
-
-### PreviewGrid.jsx
-Preview compacto en formularios de subida/edición.
-
-```jsx
-import PreviewGrid from '../components/ImageGrid/PreviewGrid';
-<PreviewGrid slots={slots} />  // slots: Array<{preview: string}|null>
-```
-
-**Alturas:** 1→140px, 2→110px, 3-4→90px
-
-**Usado en:** ModalSubir.jsx, ModalEditar.jsx
-
-## Imágenes — dos versiones por foto
-Desde el servidor se reciben dos rutas por imagen:
-- `Imagen1..4` → original JPG/PNG (calidad máxima) — usado en **lightbox**
-- `Thumb1..4` → thumbnail WebP 800px (ligero) — usado en **cards y grids**
-
-Fallback: `Thumb1 || Imagen1` → si una imagen fue subida antes del sistema de thumbs, usa el original.
-
-```js
-// En Cargaimg.js y MiTrastero.jsx
-const thumbs = [
-  task.Thumb1 || task.Imagen1,
-  task.Thumb2 || task.Imagen2,
-  task.Thumb3 || task.Imagen3,
-  task.Thumb4 || task.Imagen4,
-];
-```
+## Páginas principales
+| Página | Ruta | Notas |
+|---|---|---|
+| `Principal.js` | `/` | Grid público de artículos |
+| `De.js` | `/De/:nombre` | Vista pública trastero — toggle Grupo/Todas, modal, lightbox |
+| `MiTrastero.jsx` | `/mi-trastero` | Área privada — requiere login |
+| `SubirTrastero.jsx` | `/subir` | Formulario crear artículo |
+| `Settings.jsx` | `/settings` | Configuración de tema |
+| `Profile.jsx` | `/profile` | Perfil de usuario |
 
 ## MiTrastero.jsx — puntos clave
 - `PageWrapper` recibe `bg={theme.background}` (obligatorio para el fondo)
-- `CountBadge` — texto plano con color `accent`, sin pill/borde
-- `FlatInfo` tiene `border-top: 2px solid rgb(247,247,251)` (separador imágenes/texto)
-- Fetcha `trasteroId` en `useEffect` → `GET /api/trasteros/contenedor` → pasa a `<ModalSubir>`
-- Vista grupo (defecto) + Vista plana (toggle, igual que De.js)
+- Fetcha `trasteroId` → `GET /api/trasteros/contenedor` → pasa a `<ModalSubir>`
+- Toggle `vistaPlana`: false=tarjetas (Grid), true=imágenes sueltas (FlatGrid)
+- Lightbox: `useState(null)` → `{ imgs:[], idx:0 }` · teclado: Escape/ArrowLeft/ArrowRight
 
-### TrasteroCard — estructura tarjeta
-- **Barra de título** arriba: `theme.cardTitle`, 20px centrado, nombre del artículo (sin repetirse abajo)
-- **AdaptiveGrid** — fotos debajo del título
-- **FlatInfo** — precio, descripción, extras, badges (ya NO incluye CardNombre)
-- Hover overlay con botones Editar / Eliminar
+### TrasteroCard
+- Barra título arriba: `theme.cardTitle`, 20px centrado
+- AdaptiveGrid debajo del título con `width="100%"`
+- Hover overlay: botones Editar / Eliminar
+- FlatInfo: precio, descripción, extras, badges
 
-### Lightbox (galería fullscreen)
-- Estado: `const [lightbox, setLightbox] = useState(null); // { imgs: [], idx: 0 }`
-- Teclado: Escape cierra, ArrowLeft/ArrowRight navegan
-- JSX al final del return (z-index 3000)
-- **Conectado al modal de detalle**: click en foto de `DetailGrid` → abre lightbox
-
-### DetailGrid
-- Props: `{ ruta, imgs, onImgClick }`
-- `onImgClick(i)` — callback con índice de la foto clickada; si no se pasa, fotos son estáticas
-- Cursor `zoom-in` cuando `onImgClick` está presente
-- Layouts: 1 foto (320px full), 2 fotos (2 cols 240px), 3 fotos (2+1 span), 4 fotos (2×2)
-- Uso en modal de detalle: pasa handler que llama `setLightbox({ imgs: allImgs, idx: i })`
-
-## Lazy Loading — modales
-Todos los modales usan `React.lazy` + `Suspense` — solo se descargan al abrirse por primera vez.
-
-```jsx
-// Patrón en MiTrastero.jsx y Navbar.jsx:
-const ModalSubir = lazy(() => import('../components/Modal/ModalSubir'));
-// ...
-<Suspense fallback={null}>
-  <ModalSubir isOpen={showSubir} ... />
-</Suspense>
-```
-
-**Modales lazy en Navbar:** `ModalLogin`, `SignInContent`, `SignUpContent`, `AboutContent`, `ContactContent`
-**Modales lazy en MiTrastero:** `ModalSubir`, `ModalEditar`
+## Cargaimg.js — tarjeta pública
+Componente **funcional** (convertido 2026-04-23). Sin CSS externo.
+- Styled: `CardLink, CardArticle, TitleBar, TitleAvatar, TitleText`
+- `Cargaimg.css` eliminado — **no importar**
 
 ## Modales
+
 ### ModalSubir.jsx
-- Recibe prop `trasteroId` → append al FormData antes de enviar
-- `TogglePill`: sin marcar = fondo `accent22`; marcado = fondo `accent` sólido, texto blanco
-- Categoría y Subcategoría en la misma fila (flex row)
-- Precio a la izquierda + pills Negociable/Acepto cambio a la derecha (misma fila, flex wrap)
-- Click fuera del modal NO cierra → solo cierra el botón ✕
-- Usa `PreviewGrid` de `ImageGrid/PreviewGrid`
+- Prop `trasteroId` → append FormData
+- Click fuera NO cierra — solo botón ✕
+- `TogglePill`: desmarcado=`accent22`, marcado=`accent` sólido
+- Box: `max-width:680px` · slots imagen: `80×80px`
 
 ### ModalEditar.jsx
-- Mismo estilo `TogglePill` que ModalSubir
-- Maneja `slots_info` JSON para saber qué imágenes son nuevas/vacías/existentes
-- Usa `PreviewGrid` de `ImageGrid/PreviewGrid`
+- Maneja `slots_info` JSON (imágenes nuevas/vacías/existentes)
+- Box: `max-width:720px` · mobile ≤600px: `max-height:95vh`
 
-## Medidas de Modales
+### ModalLogin.jsx
+- Contenedor genérico para SignIn/SignUp/About/Contact
+- Box: `max-width:450px` · mobile ≤768px: `max-width:90%`
 
-### ModalSubir (`src/components/Modal/ModalSubir.jsx`)
-- **Box**: `max-width: 680px` · `max-height: 90vh` · `padding: 32px 28px 28px`
-- **Overlay**: `padding: 20px`
-- **CloseBtn**: `32×32px`
-- **Input / Select / Textarea**: `padding: 10px 14px`
-- **Textarea**: `min-height: 72px`
-- **TogglePill**: `padding: 6px 14px` · `border-radius: 20px`
-- **Slots de imagen**: `width: 80px` · `height: 80px` · `border-radius: 8px`
-- **PreviewGrid alturas**: 1 img → 140px · 2 imgs → 110px · 3-4 imgs → 90px
-- **ExtraGrid**: `minmax(120px, 1fr)` · `gap: 10px`
-
-### ModalEditar (`src/components/Modal/ModalEditar.jsx`)
-- **Box**: `max-width: 720px` · `max-height: 90vh` · `padding: 32px 32px 28px`
-- **Mobile (≤600px)**: `max-height: 95vh` · `padding: 24px 18px 20px` · overlay `padding: 0`
-- **TwoCol**: `gap: 12px` (colapsa a 1 col en ≤480px)
-- **Slots de imagen**: `width: 80px` · `height: 80px`
-- **ExtraGrid**: `minmax(140px, 1fr)` · `gap: 12px`
-- **PreviewGrid alturas**: 1 img → 140px · 2 imgs → 110px · 3-4 imgs → 90px
-
-### ModalLogin (`src/components/Modal/ModalLogin.jsx`)
-- **Box**: `max-width: 450px` · `max-height: 90vh` · `padding: 55px 40px 40px`
-- **Mobile (≤768px)**: `max-width: 90%` · `padding: 55px 20px 30px`
-- **CloseButton**: `36×36px`
+## Imágenes — dos versiones por foto
+- `Imagen1..4` → original JPG/PNG — usado en lightbox
+- `Thumb1..4` → thumbnail WebP 800px — usado en cards (fallback: `Thumb1 || Imagen1`)
 
 ## Categorías
-### CategoriasContext (`src/context/CategoriasContext.js`)
-- Carga categorías desde `GET /api/categorias` al montar la app
-- Fallback al array de `categorias.js` si la API falla
-- Formato normalizado: `{ id, nombre, subs: [{ id, nombre }] }`
-- Consumido por `ModalSubir` y `ModalEditar` vía `useContext(CategoriasContext)`
-
-### Campos extra (`src/constants/categorias.js`)
-- `CAMPOS_EXTRA` — campos dinámicos por categoría (Motor: km/anio/combustible/cv; Inmobiliaria: metros/habitaciones/banos)
+- `CategoriasContext` carga desde `GET /api/categorias` con fallback a `categorias.js`
+- `CAMPOS_EXTRA` en `constants/categorias.js` — campos dinámicos por categoría
 - `formatExtra(extras)` — formatea para mostrar en tarjeta
 
-## Cargaimg.js — componente funcional
-Convertido de `class` a `function` (2026-04-23). Sin CSS externo — estilos en Styled Components.
-- `CardLink` (Link), `CardArticle`, `TitleBar`, `TitleAvatar`, `TitleText`
-- Usa `AdaptiveGrid` de `ImageGrid/AdaptiveGrid`
-- `Cargaimg.css` eliminado — no importar en ningún sitio
-
 ## Patrones de estilo
-- Tarjetas: `border: 2px solid rgb(247, 247, 251)`, `border-radius: 10px`
-- Badges: `background: accent22, border: 1px solid accent44, color: accent`
-- Separador imagen/info: `border-top: 2px solid rgb(247, 247, 251)` en FlatInfo
-- `getContrastColor(hex)` — importar desde `src/utils/colorUtils.js`
-- `API_URL` — importar desde `src/utils/api.js`
-- Props de Styled Components con colores → usar siempre nombres como `bg`, `accent`, `color` (no `bgColor`, `textColor` — generan warning DOM en SC v6)
+- Tarjetas: `border: 2px solid rgb(247,247,251)` · `border-radius: 10px`
+- Badges: `bg: accent22` · `border: 1px solid accent44` · `color: accent`
+- Separador img/info: `border-top: 2px solid rgb(247,247,251)` en FlatInfo
+- Props SC con colores: usar `bg`, `accent`, `color` — NO `bgColor`/`textColor` (generan warning DOM en SC v6)

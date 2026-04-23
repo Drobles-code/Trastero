@@ -1,31 +1,32 @@
 # MEMORY INDEX
 
-## Regla de carga
-Cargar SOLO los archivos relevantes para la tarea. No cargar todo de golpe.
+## ⚡ Protocolo de inicio de sesión
+1. Leer SOLO `project_overview.md` al empezar
+2. Cargar el resto **bajo demanda** según la tarea
+3. NUNCA cargar todos los MD de golpe — desperdicia tokens
 
-## Project
+## Cuándo cargar cada MD
 
-| Archivo | Cuándo cargarlo |
+| MD | Cargar cuando... |
 |---|---|
-| [project_overview.md](./project_overview.md) | **Siempre** — estado, estructura, próximos pasos |
-| [project_database.md](./project_database.md) | Al tocar BD, schema.sql, migraciones, tablas |
-| [project_backend.md](./project_backend.md) | Al tocar server/, rutas API, auth, multer |
-| [project_frontend.md](./project_frontend.md) | Al tocar src/, páginas, modales, estilos, temas |
+| `project_overview.md` | **Siempre primero** |
+| `project_frontend.md` | Tarea toca src/, páginas, modales, estilos, temas, grids |
+| `project_backend.md` | Tarea toca server/, rutas API, auth, multer, endpoints |
+| `project_database.md` | Tarea toca BD, tablas, schema.sql, migraciones |
 
 ## Guía rápida por tarea
 
-| Tarea | Leer |
+| Tarea | Leer además |
 |---|---|
-| Imágenes / grids / cards | `project_frontend.md` → sección ImageGrid |
-| Modales (subir/editar/login) | `project_frontend.md` → sección Modales |
-| Tema / colores / Settings | `project_frontend.md` → sección ThemeContext |
-| Login / registro / JWT | `project_backend.md` + `project_frontend.md` → Auth |
-| Nuevas rutas API | `project_backend.md` |
-| Cambios en tablas BD | `project_database.md` |
-| Arrancar el proyecto | `project_overview.md` → sección iniciar |
-| Añadir componente nuevo | `project_frontend.md` → Patrones de estilo |
+| Imágenes / grids / cards | frontend → sección ImageGrid |
+| Modales / formularios | frontend → sección Modales |
+| Tema / colores / Settings | frontend → sección ThemeContext |
+| Login / JWT / registro | backend + frontend → Auth |
+| Nuevas rutas API | backend |
+| Cambios en tablas | database |
+| Arrancar el proyecto | overview → sección iniciar |
 
 ## Feedback
-- [feedback_flujo_cambios.md](./feedback_flujo_cambios.md) — Preguntar siempre antes de hacer git commit/push o actualizar memoria.
-- [feedback_worktree_y_componentes.md](./feedback_worktree_y_componentes.md) — Worktree invisible hasta merge; border en imágenes obligatorio; Mi Trastero requiere login.
-- [feedback_bd_pgadmin.md](./feedback_bd_pgadmin.md) — pgAdmin: pegar SQL directamente, nunca escribir la ruta del archivo.
+- [feedback_flujo_cambios.md](./feedback_flujo_cambios.md) — Preguntar antes de git commit/push o actualizar memoria
+- [feedback_worktree_y_componentes.md](./feedback_worktree_y_componentes.md) — Border obligatorio en imágenes; Mi Trastero requiere login
+- [feedback_bd_pgadmin.md](./feedback_bd_pgadmin.md) — pgAdmin: pegar SQL directamente, nunca la ruta del archivo
