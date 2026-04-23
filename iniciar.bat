@@ -1,6 +1,6 @@
 @echo off
 setlocal enabledelayedexpansion
-title Trastero — Servicios
+title trastero — Servicios
 ::
 :: ─────────────────────────────────────────────
 ::  Rutas
@@ -59,20 +59,20 @@ timeout /t 2 /nobreak >nul
 :ARRANCAR
 echo.
 echo  ╔══════════════════════════════════════════╗
-echo  ║   Arrancando Trastero                    ║
+echo  ║   Arrancando trastero                    ║
 echo  ╚══════════════════════════════════════════╝
 echo.
 
 :: Backend
 echo  [1/2] Iniciando backend  → http://localhost:5000
-start "Trastero — Backend" cmd /k "cd /d "%SERVER%" && node server.js"
+start "trastero — Backend" cmd /k "cd /d "%SERVER%" && node server.js"
 
 :: Pequeña pausa para que el backend levante antes que el frontend
 timeout /t 2 /nobreak >nul
 
 :: Frontend
 echo  [2/2] Iniciando frontend → http://localhost:3000
-start "Trastero — Frontend" cmd /k "cd /d "%ROOT%" && npm start"
+start "trastero — Frontend" cmd /k "cd /d "%ROOT%" && npm start"
 
 echo.
 echo  ✓ Listo. Puedes cerrar esta ventana.

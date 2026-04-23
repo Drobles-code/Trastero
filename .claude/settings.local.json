@@ -3,7 +3,12 @@
     "allow": [
       "Bash(sc query *)",
       "Bash(net start *)",
-      "PowerShell(Start-Service postgresql-x64-18 2>&1)"
+      "PowerShell(Start-Service postgresql-x64-18 2>&1)",
+      "Bash(netstat -ano)",
+      "Bash(findstr \":3000\")",
+      "Bash(xargs grep *)",
+      "Bash(findstr \":5000\")",
+      "Bash(ping -n 3 127.0.0.1)"
     ]
   }
 }

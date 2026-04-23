@@ -2,7 +2,6 @@
 -- PostgreSQL database dump
 --
 
-\restrict YHLfnvbmAYSleJHvA5BsqtGTsyVpaHwoEuHjDk6hYixpnBm1fvM9z9AbH44dgLb
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -739,5 +738,4 @@ ALTER TABLE ONLY public.trasteros
 -- PostgreSQL database dump complete
 --
 
-\unrestrict YHLfnvbmAYSleJHvA5BsqtGTsyVpaHwoEuHjDk6hYixpnBm1fvM9z9AbH44dgLb
 
