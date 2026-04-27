@@ -55,6 +55,19 @@ if errorlevel 1 (
 echo    [OK] Repositorio actualizado.
 
 :: ─────────────────────────────────────────────
+::  1b. Sincronizar memoria de Claude
+:: ─────────────────────────────────────────────
+echo.
+echo  [1b] Sincronizando memoria de Claude...
+set "MEMORY_DIR=%USERPROFILE%\.claude\projects\C--Users-drobl-Desktop-CLAUDE-proyectos-Trastero\memory"
+if exist "!MEMORY_DIR!" (
+    copy /Y "%ROOT%\MD\MEMORY.md" "!MEMORY_DIR!\MEMORY.md" >nul
+    echo    [OK] Memoria de Claude sincronizada.
+) else (
+    echo    [SKIP] Carpeta de memoria no encontrada (se crea al abrir Claude Code por primera vez).
+)
+
+:: ─────────────────────────────────────────────
 ::  2. npm install frontend
 :: ─────────────────────────────────────────────
 echo.
