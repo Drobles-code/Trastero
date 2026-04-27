@@ -48,7 +48,6 @@ Todos los modales usan `React.lazy` + `<Suspense fallback={null}>`.
 | `Principal.js` | `/` | Grid público de artículos |
 | `De.js` | `/De/:nombre` | Vista pública trastero — toggle Grupo/Todas, modal, lightbox |
 | `MiTrastero.jsx` | `/mi-trastero` | Área privada — requiere login |
-| `SubirTrastero.jsx` | `/subir` | Formulario crear artículo |
 | `Settings.jsx` | `/settings` | Configuración de tema |
 | `Profile.jsx` | `/profile` | Perfil de usuario |
 

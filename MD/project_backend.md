@@ -32,7 +32,7 @@ type: project
 | POST | `/api/trasteros` | Sí | Crear artículo (multipart/form-data) |
 | PUT | `/api/trasteros/:id` | Sí | Editar artículo (multipart/form-data) |
 | DELETE | `/api/trasteros/:id` | Sí | Eliminar artículo (cascade imágenes) |
-| DELETE | `/api/trasteros/:id/imagenes/:pos` | Sí | Eliminar imagen suelta |
+| DELETE | `/api/trasteros/:id/imagenes/:posicion` | Sí | Eliminar imagen suelta |
 
 ## Helpers en trasteros.js
 - `buildExtras(row)` — reconstruye objeto `{ km, anio, ... }` desde columnas planas

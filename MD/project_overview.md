@@ -27,7 +27,7 @@ SETUP.bat            → primer uso en PC nuevo
 - server/.env NO está en repo — usar `server/.env.example`
 - **CRÍTICO**: `DB_NAME=Trastero` (T mayúscula)
 
-## Estado (2026-04-23)
+## Estado (2026-04-27)
 - ✅ CRUD artículos completo con campos tipados por categoría
 - ✅ Auth JWT + bcrypt
 - ✅ Tema personalizable (ThemeContext + localStorage)
